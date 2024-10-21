@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using Unity.MLAgents;
+using Unity.MLAgents.SideChannels;
+using Unity.MLAgents.Sensors;
 using UnityEngine;
 
 public class SoccerEnvController : MonoBehaviour
@@ -47,9 +49,17 @@ public class SoccerEnvController : MonoBehaviour
 
     private int m_ResetTimer;
 
+    private int blueTeamGoals = 0;
+    private int purpleTeamGoals = 0;
+    private int blueTeamWins = 0;
+    private StatsRecorder statsRecorder;
+
+    private int m_EpisodeCount = 0;
+    private int m_BlueTeamScore = 0;
+    private int m_PurpleTeamScore = 0;
+
     void Start()
     {
-
         m_SoccerSettings = FindObjectOfType<SoccerSettings>();
         // Initialize TeamManager
         m_BlueAgentGroup = new SimpleMultiAgentGroup();
@@ -71,6 +81,7 @@ public class SoccerEnvController : MonoBehaviour
             }
         }
         ResetScene();
+        statsRecorder = Academy.Instance.StatsRecorder;
     }
 
     void FixedUpdate()
@@ -100,24 +111,64 @@ public class SoccerEnvController : MonoBehaviour
     {
         if (scoredTeam == Team.Blue)
         {
+            m_BlueTeamScore++;
             m_BlueAgentGroup.AddGroupReward(1 - (float)m_ResetTimer / MaxEnvironmentSteps);
             m_PurpleAgentGroup.AddGroupReward(-1);
         }
         else
         {
+            m_PurpleTeamScore++;
             m_PurpleAgentGroup.AddGroupReward(1 - (float)m_ResetTimer / MaxEnvironmentSteps);
             m_BlueAgentGroup.AddGroupReward(-1);
         }
+
+        // End episode and reset
+        EndEpisode();
+    }
+
+    private void EndEpisode()
+    {
+        m_EpisodeCount++;
+
+        // Update total goals and wins
+        blueTeamGoals += m_BlueTeamScore;
+        purpleTeamGoals += m_PurpleTeamScore;
+        if (m_BlueTeamScore > m_PurpleTeamScore)
+        {
+            blueTeamWins++;
+        }
+
+        // Calculate stats
+        float blueWinRate = (float)blueTeamWins / m_EpisodeCount;
+        float avgBlueGoals = (float)blueTeamGoals / m_EpisodeCount;
+        float avgPurpleGoals = (float)purpleTeamGoals / m_EpisodeCount;
+
+        // Log stats to TensorBoard
+        statsRecorder.Add("Blue Team Win Rate", blueWinRate);
+        statsRecorder.Add("Avg Blue Team Goals", avgBlueGoals);
+        statsRecorder.Add("Avg Purple Team Goals", avgPurpleGoals);
+
+        // Log to console every 100 episodes
+        if (m_EpisodeCount % 100 == 0)
+        {
+            Debug.Log($"Episode {m_EpisodeCount} completed:");
+            Debug.Log($"Blue Team Win Rate: {blueWinRate:F4}");
+            Debug.Log($"Avg Blue Team Goals: {avgBlueGoals:F4}");
+            Debug.Log($"Avg Purple Team Goals: {avgPurpleGoals:F4}");
+            Debug.Log($"Last 100 episodes: Blue {blueTeamWins % 100} wins, {blueTeamGoals - (m_EpisodeCount - 100 > 0 ? blueTeamGoals / (m_EpisodeCount - 100) * 100 : 0)} goals");
+            Debug.Log("--------------------");
+        }
+
         m_PurpleAgentGroup.EndGroupEpisode();
         m_BlueAgentGroup.EndGroupEpisode();
         ResetScene();
-
     }
-
 
     public void ResetScene()
     {
         m_ResetTimer = 0;
+        m_BlueTeamScore = 0;
+        m_PurpleTeamScore = 0;
 
         //Reset Agents
         foreach (var item in AgentsList)

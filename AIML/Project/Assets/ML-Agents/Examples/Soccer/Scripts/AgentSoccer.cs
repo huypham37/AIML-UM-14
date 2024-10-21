@@ -61,7 +61,7 @@ public class AgentSoccer : Agent
             opponentGoal = GameObject.Find("GoalNetPurple").transform;
         }
         else
-        
+
         {
             // Assign Blue team's goal as opponent's goal for Purple team agents
             opponentGoal = GameObject.Find("GoalNetBlue").transform;
@@ -122,6 +122,7 @@ public class AgentSoccer : Agent
 
         // Initialize environment parameters
         m_ResetParams = Academy.Instance.EnvironmentParameters;
+
     }
 
     public void MoveAgent(ActionSegment<int> act)
@@ -191,7 +192,7 @@ public class AgentSoccer : Agent
             // Calculate distance to opponent's goal
             float distanceToGoal = Vector3.Distance(transform.position, opponentGoal.position);
             // Reward for being closer to the goal
-            Debug.Log($"{gameObject.name} Distance to Goal: {distanceToGoal}");
+            // Debug.Log($"{gameObject.name} Distance to Goal: {distanceToGoal}");
             AddReward(1.0f / distanceToGoal);
         }
 
