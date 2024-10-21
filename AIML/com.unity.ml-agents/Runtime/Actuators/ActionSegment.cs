@@ -93,7 +93,7 @@ namespace Unity.MLAgents.Actuators
             {
                 if (index < 0 || index > Length)
                 {
-                    throw new IndexOutOfRangeException($"Index out of bounds, expected a number between 0 and {Length}");
+                    throw new IndexOutOfRangeException($"Index out o f bounds, expected a number between 0 and {Length}");
                 }
                 Array[Offset + index] = value;
             }

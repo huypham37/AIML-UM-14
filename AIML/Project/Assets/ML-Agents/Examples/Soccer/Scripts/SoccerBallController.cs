@@ -11,6 +11,14 @@ public class SoccerBallController : MonoBehaviour
     void Start()
     {
         envController = area.GetComponent<SoccerEnvController>();
+        if (envController == null)
+        {
+            Debug.LogError("SoccerEnvController not found!");
+        }
+        else
+        {
+            Debug.Log("SoccerEnvController successfully linked.");
+        }
     }
 
     void OnCollisionEnter(Collision col)

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Unity.MLAgents;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class SoccerEnvController : MonoBehaviour
 {
@@ -46,6 +47,17 @@ public class SoccerEnvController : MonoBehaviour
     private SimpleMultiAgentGroup m_PurpleAgentGroup;
 
     private int m_ResetTimer;
+
+    // Add these new variables
+    [FormerlySerializedAs("m_GoalsScored")] public int goalsScored;
+    [FormerlySerializedAs("m_GoalsConceded")] public int goalsConceded;
+    [FormerlySerializedAs("m_PossessionTime")] public float possessionTime;
+    [FormerlySerializedAs("m_PassesAttempted")] public int passesAttempted;
+    public int m_PassesCompleted;
+    public float m_LastPossessionChangeTime;
+    public Team m_LastPossessionTeam;
+
+    private bool m_PassInProgress = false;
 
     void Start()
     {
@@ -98,26 +110,48 @@ public class SoccerEnvController : MonoBehaviour
 
     public void GoalTouched(Team scoredTeam)
     {
+        // Debug.Log($"Goal scored by team: {scoredTeam}");
+
         if (scoredTeam == Team.Blue)
         {
             m_BlueAgentGroup.AddGroupReward(1 - (float)m_ResetTimer / MaxEnvironmentSteps);
             m_PurpleAgentGroup.AddGroupReward(-1);
+            goalsScored++;
+            Debug.Log("Goal Scored by Blue, goalsScored: " + goalsScored);
         }
         else
         {
             m_PurpleAgentGroup.AddGroupReward(1 - (float)m_ResetTimer / MaxEnvironmentSteps);
             m_BlueAgentGroup.AddGroupReward(-1);
+            goalsConceded++;
+            Debug.Log("Goal Scored by Purple, goalsScored: " + goalsScored);
         }
+
+        // Record stats
+        Academy.Instance.StatsRecorder.Add("GoalsScored", goalsScored);
+        Academy.Instance.StatsRecorder.Add("GoalsConceded", goalsConceded);
+        Academy.Instance.StatsRecorder.Add("PossessionTime", possessionTime);
+        Academy.Instance.StatsRecorder.Add("PassesAttempted", passesAttempted);
+        Academy.Instance.StatsRecorder.Add("PassesCompleted", m_PassesCompleted);
+
         m_PurpleAgentGroup.EndGroupEpisode();
         m_BlueAgentGroup.EndGroupEpisode();
         ResetScene();
-
     }
 
 
     public void ResetScene()
     {
         m_ResetTimer = 0;
+
+        // Reset the new variables
+        goalsScored = 0;
+        goalsConceded = 0;
+        possessionTime = 0f;
+        passesAttempted = 0;
+        m_PassesCompleted = 0;
+        m_LastPossessionChangeTime = Time.time;
+        m_LastPossessionTeam = Team.Blue; // Assume Blue starts with possession
 
         //Reset Agents
         foreach (var item in AgentsList)
@@ -134,5 +168,43 @@ public class SoccerEnvController : MonoBehaviour
 
         //Reset Ball
         ResetBall();
+
+        // Record stats
+        Academy.Instance.StatsRecorder.Add("GoalsScored", goalsScored);
+        Academy.Instance.StatsRecorder.Add("GoalsConceded", goalsConceded);
+        Academy.Instance.StatsRecorder.Add("PossessionTime", possessionTime);
+        Academy.Instance.StatsRecorder.Add("PassesAttempted", passesAttempted);
+        Academy.Instance.StatsRecorder.Add("PassesCompleted", m_PassesCompleted);
+    }
+
+    public void UpdatePossessionTime(Team currentTeam)
+    {
+        if (m_LastPossessionTeam != currentTeam)
+        {
+            float currentTime = Time.time;
+            possessionTime += currentTime - m_LastPossessionChangeTime;
+            m_LastPossessionChangeTime = currentTime;
+            m_LastPossessionTeam = currentTeam;
+        }
+    }
+
+    public void AttemptPass()
+    {
+        passesAttempted++;
+        m_PassInProgress = true;
+    }
+
+    public void CompletePass()
+    {
+        if (m_PassInProgress)
+        {
+            m_PassesCompleted++;
+            m_PassInProgress = false;
+        }
+    }
+
+    public bool IsPassInProgress()
+    {
+        return m_PassInProgress;
     }
 }

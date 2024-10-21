@@ -27,7 +27,7 @@ public class AgentSoccer : Agent
     float m_BallTouch;
     public Position position;
 
-    const float k_Power = 2000f;
+    const float KPower = 2000f;
     float m_Existential;
     float m_LateralSpeed;
     float m_ForwardSpeed;
@@ -61,7 +61,7 @@ public class AgentSoccer : Agent
             opponentGoal = GameObject.Find("GoalNetPurple").transform;
         }
         else
-        
+
         {
             // Assign Blue team's goal as opponent's goal for Purple team agents
             opponentGoal = GameObject.Find("GoalNetBlue").transform;
@@ -111,7 +111,7 @@ public class AgentSoccer : Agent
         }
 
         // Get settings and rigidbody
-        m_SoccerSettings = FindObjectOfType<SoccerSettings>();
+        m_SoccerSettings = FindAnyObjectByType<SoccerSettings>();
         if (m_SoccerSettings == null)
         {
             Debug.LogError("SoccerSettings not found in the scene.");
@@ -122,6 +122,12 @@ public class AgentSoccer : Agent
 
         // Initialize environment parameters
         m_ResetParams = Academy.Instance.EnvironmentParameters;
+
+        SoccerEnvController controller = GetComponentInParent<SoccerEnvController>();
+        if (controller != null)
+        {
+            controller.UpdatePossessionTime(this.team);
+        }
     }
 
     public void MoveAgent(ActionSegment<int> act)
@@ -191,7 +197,7 @@ public class AgentSoccer : Agent
             // Calculate distance to opponent's goal
             float distanceToGoal = Vector3.Distance(transform.position, opponentGoal.position);
             // Reward for being closer to the goal
-            Debug.Log($"{gameObject.name} Distance to Goal: {distanceToGoal}");
+            // Debug.Log($"{gameObject.name} Distance to Goal: {distanceToGoal}");
             AddReward(1.0f / distanceToGoal);
         }
 
@@ -213,11 +219,10 @@ public class AgentSoccer : Agent
 
     void OnCollisionEnter(Collision c)
     {
-        // Handle ball collisions and apply rewards
-        var force = k_Power * m_KickPower;
+        var force = KPower * m_KickPower;
         if (position == Position.Goalie)
         {
-            force = k_Power;
+            force = KPower;
         }
 
         if (c.gameObject.CompareTag("ball"))
@@ -225,6 +230,13 @@ public class AgentSoccer : Agent
             AddReward(.2f * m_BallTouch);
             var dir = (c.contacts[0].point - transform.position).normalized;
             c.gameObject.GetComponent<Rigidbody>().AddForce(dir * force);
+            // UpdatePossession();
+
+            SoccerEnvController controller = GetComponentInParent<SoccerEnvController>();
+            if (controller != null)
+            {
+                controller.UpdatePossessionTime(this.team);
+            }
         }
     }
 
