@@ -41,6 +41,16 @@ public class AgentSoccer : Agent
 
     EnvironmentParameters m_ResetParams;
 
+    void OnValidate()
+    {
+        // Configure action space in editor
+        var behaviorParameters = GetComponent<BehaviorParameters>();
+        if (behaviorParameters != null)
+        {
+            behaviorParameters.BrainParameters.ActionSpec = ActionSpec.MakeDiscrete(3, 3, 3, 2);
+        }
+    }
+
     public override void Initialize()
     {
         // Get environment controller
@@ -54,30 +64,6 @@ public class AgentSoccer : Agent
             m_Existential = 1f / MaxStep;
         }
 
-        // Automatically assign the opponent goal based on team
-        if (team == Team.Blue)
-        {
-            // Assign Purple team's goal as opponent's goal for Blue team agents
-            opponentGoal = GameObject.Find("GoalNetPurple").transform;
-        }
-        else
-
-        {
-            // Assign Blue team's goal as opponent's goal for Purple team agents
-            opponentGoal = GameObject.Find("GoalNetBlue").transform;
-        }
-
-        // Check if the opponent goal is assigned properly
-        if (opponentGoal == null)
-        {
-            Debug.LogError("Opponent goal not set for " + gameObject.name);
-        }
-
-        if (opponentGoal == null)
-        {
-            Debug.Log("Opponent goal not set");
-        }
-
         // Set team and initial positions
         m_BehaviorParameters = gameObject.GetComponent<BehaviorParameters>();
         if (m_BehaviorParameters.TeamId == (int)Team.Blue)
@@ -85,12 +71,20 @@ public class AgentSoccer : Agent
             team = Team.Blue;
             initialPos = new Vector3(transform.position.x - 5f, .5f, transform.position.z);
             rotSign = 1f;
+            opponentGoal = GameObject.Find("GoalNetPurple").transform;
         }
         else
         {
             team = Team.Purple;
             initialPos = new Vector3(transform.position.x + 5f, .5f, transform.position.z);
             rotSign = -1f;
+            opponentGoal = GameObject.Find("GoalNetBlue").transform;
+        }
+
+        // Check if the opponent goal is assigned properly
+        if (opponentGoal == null)
+        {
+            Debug.LogError("Opponent goal not set for " + gameObject.name);
         }
 
         // Set movement speeds based on position
@@ -123,6 +117,12 @@ public class AgentSoccer : Agent
         // Initialize environment parameters
         m_ResetParams = Academy.Instance.EnvironmentParameters;
 
+        // // Configure action space programmatically
+        // var behaviorParameters = GetComponent<BehaviorParameters>();
+        //
+        // // Set the number of discrete actions
+        // behaviorParameters.BrainParameters.ActionSpec = ActionSpec.MakeDiscrete(3, 3, 3, 2); // 4 branches
+
     }
 
     public void MoveAgent(ActionSegment<int> act)
@@ -135,6 +135,7 @@ public class AgentSoccer : Agent
         var forwardAxis = act[0];
         var rightAxis = act[1];
         var rotateAxis = act[2];
+
 
         // Handle forward/backward movement
         switch (forwardAxis)
@@ -170,10 +171,62 @@ public class AgentSoccer : Agent
                 break;
         }
 
+        var passAction = 0;
+        if (act.Length > 3)
+        {
+            passAction = act[3];
+        }
+        else
+        {
+            Debug.Log("Fourth action is missing");
+        }
+        // Handle passing action
+        if (passAction == 1)
+        {
+            PassBall();
+        }
+
         // Apply rotation
         transform.Rotate(rotateDir, Time.deltaTime * 100f);
         // Apply movement
         agentRb.AddForce(dirToGo * m_SoccerSettings.agentRunSpeed, ForceMode.VelocityChange);
+
+    }
+
+    private void PassBall()
+    {
+        Collider[] nearbyObjects = Physics.OverlapSphere(transform.position, 10f);
+        AgentSoccer nearestTeammate = null;
+        float nearestDistance = float.MaxValue;
+
+        foreach (Collider col in nearbyObjects)
+        {
+            AgentSoccer teammate = col.GetComponent<AgentSoccer>();
+            if (teammate != null && teammate != this && teammate.team == this.team)
+            {
+                float distance = Vector3.Distance(transform.position, teammate.transform.position);
+                if (distance < nearestDistance)
+                {
+                    nearestTeammate = teammate;
+                    nearestDistance = distance;
+                }
+            }
+        }
+
+        if (nearestTeammate != null)
+        {
+            Vector3 directionToTeammate = (nearestTeammate.transform.position - transform.position).normalized;
+            GameObject ball = GameObject.FindGameObjectWithTag("ball");
+            if (ball != null)
+            {
+                Rigidbody ballRb = ball.GetComponent<Rigidbody>();
+                if (ballRb != null)
+                {
+                    ballRb.AddForce(directionToTeammate * k_Power * 1.5f, ForceMode.Impulse);
+                    AddReward(0.1f); // Small reward for successful pass
+                }
+            }
+        }
     }
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
@@ -192,10 +245,10 @@ public class AgentSoccer : Agent
             // Calculate distance to opponent's goal
             float distanceToGoal = Vector3.Distance(transform.position, opponentGoal.position);
             // Reward for being closer to the goal
-            // Debug.Log($"{gameObject.name} Distance to Goal: {distanceToGoal}");
             AddReward(1.0f / distanceToGoal);
         }
 
+        // Handle movement and passing
         MoveAgent(actionBuffers.DiscreteActions);
     }
 
@@ -210,6 +263,7 @@ public class AgentSoccer : Agent
         if (Input.GetKey(KeyCode.D)) discreteActionsOut[2] = 2;
         if (Input.GetKey(KeyCode.E)) discreteActionsOut[1] = 1;
         if (Input.GetKey(KeyCode.Q)) discreteActionsOut[1] = 2;
+        if (Input.GetKey(KeyCode.Space)) discreteActionsOut[3] = 1; // New passing action
     }
 
     void OnCollisionEnter(Collision c)

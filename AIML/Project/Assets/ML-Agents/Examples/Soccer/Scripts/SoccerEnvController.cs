@@ -1,8 +1,14 @@
 using System.Collections.Generic;
+using System.IO;
 using Unity.MLAgents;
 using Unity.MLAgents.SideChannels;
 using Unity.MLAgents.Sensors;
 using UnityEngine;
+using Unity.MLAgents.Policies;
+using Unity.Sentis;
+using Unity.Sentis.ONNX;
+using Random = UnityEngine.Random;
+using UnityEditor;
 
 public class SoccerEnvController : MonoBehaviour
 {
@@ -58,6 +64,7 @@ public class SoccerEnvController : MonoBehaviour
     private int m_BlueTeamScore = 0;
     private int m_PurpleTeamScore = 0;
 
+
     void Start()
     {
         m_SoccerSettings = FindObjectOfType<SoccerSettings>();
@@ -79,6 +86,9 @@ public class SoccerEnvController : MonoBehaviour
             {
                 m_PurpleAgentGroup.RegisterAgent(item.Agent);
             }
+            // Load and assign model
+            LoadAndAssignModel();
+
         }
         ResetScene();
         statsRecorder = Academy.Instance.StatsRecorder;
@@ -92,6 +102,33 @@ public class SoccerEnvController : MonoBehaviour
             m_BlueAgentGroup.GroupEpisodeInterrupted();
             m_PurpleAgentGroup.GroupEpisodeInterrupted();
             ResetScene();
+        }
+    }
+
+
+    private void LoadAndAssignModel()
+    {
+        // Instead of loading as serialized model, load as ModelAsset
+        ModelAsset modelAsset = Resources.Load("SoccerTwos_1.4") as ModelAsset;
+
+        if(modelAsset == null){
+            Debug.LogError("Failed to load model asset + ");
+            return;
+        }
+
+        foreach(var agent in AgentsList){
+            string behaviourName = agent.Agent.GetComponent<BehaviorParameters>().BehaviorName;
+            InferenceDevice inferenceDevice = InferenceDevice.Burst;
+            var behaviorParameters = agent.Agent.GetComponent<BehaviorParameters>();
+            if(behaviorParameters != null){
+                agent.Agent.SetModel(behaviourName, modelAsset, inferenceDevice);  // Now using ModelAsset
+                behaviorParameters.BehaviorType = BehaviorType.InferenceOnly;
+            }
+            else
+            {
+                Debug.LogWarning($"BehaviorParameters component not found on agent '{agent.Agent.name}'.");
+            }
+            Debug.Log($"Model assigned to agent '{agent.Agent.name}'");
         }
     }
 
