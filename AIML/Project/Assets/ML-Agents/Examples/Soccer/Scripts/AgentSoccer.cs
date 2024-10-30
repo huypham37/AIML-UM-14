@@ -180,53 +180,12 @@ public class AgentSoccer : Agent
         {
             Debug.Log("Fourth action is missing");
         }
-        // Handle passing action
-        if (passAction == 1)
-        {
-            PassBall();
-        }
 
         // Apply rotation
         transform.Rotate(rotateDir, Time.deltaTime * 100f);
         // Apply movement
         agentRb.AddForce(dirToGo * m_SoccerSettings.agentRunSpeed, ForceMode.VelocityChange);
 
-    }
-
-    private void PassBall()
-    {
-        Collider[] nearbyObjects = Physics.OverlapSphere(transform.position, 10f);
-        AgentSoccer nearestTeammate = null;
-        float nearestDistance = float.MaxValue;
-
-        foreach (Collider col in nearbyObjects)
-        {
-            AgentSoccer teammate = col.GetComponent<AgentSoccer>();
-            if (teammate != null && teammate != this && teammate.team == this.team)
-            {
-                float distance = Vector3.Distance(transform.position, teammate.transform.position);
-                if (distance < nearestDistance)
-                {
-                    nearestTeammate = teammate;
-                    nearestDistance = distance;
-                }
-            }
-        }
-
-        if (nearestTeammate != null)
-        {
-            Vector3 directionToTeammate = (nearestTeammate.transform.position - transform.position).normalized;
-            GameObject ball = GameObject.FindGameObjectWithTag("ball");
-            if (ball != null)
-            {
-                Rigidbody ballRb = ball.GetComponent<Rigidbody>();
-                if (ballRb != null)
-                {
-                    ballRb.AddForce(directionToTeammate * k_Power * 1.5f, ForceMode.Impulse);
-                    AddReward(0.1f); // Small reward for successful pass
-                }
-            }
-        }
     }
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
@@ -240,14 +199,6 @@ public class AgentSoccer : Agent
         {
             AddReward(-m_Existential);
         }
-        else if (position == Position.Generic)
-        {
-            // Calculate distance to opponent's goal
-            float distanceToGoal = Vector3.Distance(transform.position, opponentGoal.position);
-            // Reward for being closer to the goal
-            AddReward(1.0f / distanceToGoal);
-        }
-
         // Handle movement and passing
         MoveAgent(actionBuffers.DiscreteActions);
     }
