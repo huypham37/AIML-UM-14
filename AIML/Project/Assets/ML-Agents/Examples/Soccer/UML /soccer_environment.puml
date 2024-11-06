@@ -1,0 +1,132 @@
+@startuml
+
+' Define enums
+enum Team {
+    Blue = 0
+    Purple = 1
+}
+
+enum Position {
+    Striker
+    Goalie
+    Generic
+}
+
+' Define classes
+class AgentSoccer {
+    +Transform opponentGoal
+    +Team team
+    +Position position
+    +Rigidbody agentRb
+    +SoccerSettings m_SoccerSettings
+    +BehaviorParameters m_BehaviorParameters
+    +Vector3 initialPos
+    +float rotSign
+    +VectorSensor vectorSensor
+    +void OnValidate()
+    +void Initialize()
+    +void MoveAgent(ActionSegment<int> act)
+    +void OnActionReceived(ActionBuffers actionBuffers)
+    +void Heuristic(in ActionBuffers actionsOut)
+    +void OnCollisionEnter(Collision c)
+    +void OnEpisodeBegin()
+    +void CollectObservations(VectorSensor sensor)
+}
+
+class SoccerEnvController {
+    +GameObject ball
+    +Rigidbody ballRb
+    +List<PlayerInfo> AgentsList
+    +SimpleMultiAgentGroup m_BlueAgentGroup
+    +SimpleMultiAgentGroup m_PurpleAgentGroup
+    +void Start()
+    +void FixedUpdate()
+    +void LoadAndAssignModel()
+    +void ResetBall()
+    +void GoalTouched(Team scoredTeam)
+    +void EndEpisode()
+    +void ResetScene()
+}
+
+class SoccerBallController {
+    +GameObject area
+    +SoccerEnvController envController
+    +string purpleGoalTag
+    +string blueGoalTag
+    +void Start()
+    +void OnCollisionEnter(Collision col)
+}
+
+class SoccerSettings {
+    +Material purpleMaterial
+    +Material blueMaterial
+    +bool randomizePlayersTeamForTraining
+    +float agentRunSpeed
+}
+
+class BallSensor {
+    +string m_Name
+    +GameObject ball
+    +AgentSoccer agent
+    +string GetName()
+    +ObservationSpec GetObservationSpec()
+    +byte[] GetCompressedObservation()
+    +int Write(ObservationWriter writer)
+}
+
+class VectorSensor {
+    +List<float> m_Observations
+    +ObservationSpec m_ObservationSpec
+    +string m_Name
+    +int Write(ObservationWriter writer)
+    +void Update()
+    +void Reset()
+    +ObservationSpec GetObservationSpec()
+    +string GetName()
+    +byte[] GetCompressedObservation()
+    +CompressionSpec GetCompressionSpec()
+    +BuiltInSensorType GetBuiltInSensorType()
+    +void AddObservation(float observation)
+    +void AddObservation(int observation)
+    +void AddObservation(Vector3 observation)
+    +void AddObservation(Vector2 observation)
+    +void AddObservation(IList<float> observation)
+    +void AddObservation(Quaternion observation)
+    +void AddObservation(bool observation)
+    +void AddOneHotObservation(int observation, int range)
+}
+
+class RayPerceptionSensorComponentBase {
+    +string SensorName
+    +List<string> DetectableTags
+    +int RaysPerDirection
+    +float MaxRayDegrees
+    +float SphereCastRadius
+    +float RayLength
+    +LayerMask RayLayerMask
+    +int ObservationStacks
+    +bool AlternatingRayOrder
+    +bool UseBatchedRaycasts
+    +Color rayHitColor
+    +Color rayMissColor
+    +RayPerceptionSensor RaySensor
+    +RayPerceptionCastType GetCastType()
+    +float GetStartVerticalOffset()
+    +float GetEndVerticalOffset()
+    +ISensor[] CreateSensors()
+    +RayPerceptionInput GetRayPerceptionInput()
+    +void UpdateSensor()
+    +int SensorObservationAge()
+}
+
+' Define relationships
+AgentSoccer --> SoccerEnvController : uses
+AgentSoccer --> SoccerSettings : uses
+AgentSoccer --> VectorSensor : uses
+AgentSoccer --> BallSensor : uses
+SoccerBallController --> SoccerEnvController : uses
+SoccerEnvController --> SoccerSettings : uses
+SoccerEnvController --> AgentSoccer : manages
+RayPerceptionSensorComponentBase --> VectorSensor : uses
+
+@enduml

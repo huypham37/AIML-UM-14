@@ -1,7 +1,9 @@
+using System.Collections.Generic; // For Queue<>
 using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Policies;
+using Unity.MLAgents.Sensors;
 
 public enum Team
 {
@@ -38,8 +40,13 @@ public class AgentSoccer : Agent
     BehaviorParameters m_BehaviorParameters;
     public Vector3 initialPos;
     public float rotSign;
+    private Queue<float[]> previousObservations = new Queue<float[]>();
+    private int memorySize = 5; // Number of previous frames to remember    
+    private List<Vector3> nearbyObjects = new List<Vector3>();
 
     EnvironmentParameters m_ResetParams;
+    private VectorSensor vectorSensor;
+    private float visionAngle = 0f;
 
     void OnValidate()
     {
@@ -71,14 +78,14 @@ public class AgentSoccer : Agent
             team = Team.Blue;
             initialPos = new Vector3(transform.position.x - 5f, .5f, transform.position.z);
             rotSign = 1f;
-            opponentGoal = GameObject.Find("GoalNetPurple").transform;
+            opponentGoal = GameObject.Find("GoalNetPurple")?.transform;
         }
         else
         {
             team = Team.Purple;
             initialPos = new Vector3(transform.position.x + 5f, .5f, transform.position.z);
             rotSign = -1f;
-            opponentGoal = GameObject.Find("GoalNetBlue").transform;
+            opponentGoal = GameObject.Find("GoalNetBlue")?.transform;
         }
 
         // Check if the opponent goal is assigned properly
@@ -117,11 +124,7 @@ public class AgentSoccer : Agent
         // Initialize environment parameters
         m_ResetParams = Academy.Instance.EnvironmentParameters;
 
-        // // Configure action space programmatically
-        // var behaviorParameters = GetComponent<BehaviorParameters>();
-        //
-        // // Set the number of discrete actions
-        // behaviorParameters.BrainParameters.ActionSpec = ActionSpec.MakeDiscrete(3, 3, 3, 2); // 4 branches
+        vectorSensor = new VectorSensor(10, "AgentMemorySensor");
 
     }
 
@@ -135,7 +138,7 @@ public class AgentSoccer : Agent
         var forwardAxis = act[0];
         var rightAxis = act[1];
         var rotateAxis = act[2];
-
+        var visionAxis = act[3]; // New action for vision direction
 
         // Handle forward/backward movement
         switch (forwardAxis)
@@ -171,21 +174,21 @@ public class AgentSoccer : Agent
                 break;
         }
 
-        var passAction = 0;
-        if (act.Length > 3)
+        // Handle vision direction
+        switch (visionAxis)
         {
-            passAction = act[3];
-        }
-        else
-        {
-            Debug.Log("Fourth action is missing");
+            case 1:
+                visionAngle -= 10f; // Adjust angle as needed
+                break;
+            case 2:
+                visionAngle += 10f; // Adjust angle as needed
+                break;
         }
 
         // Apply rotation
         transform.Rotate(rotateDir, Time.deltaTime * 100f);
         // Apply movement
         agentRb.AddForce(dirToGo * m_SoccerSettings.agentRunSpeed, ForceMode.VelocityChange);
-
     }
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
@@ -238,5 +241,64 @@ public class AgentSoccer : Agent
     {
         // Reset ball touch coefficient
         m_BallTouch = m_ResetParams.GetWithDefault("ball_touch", 0);
+    }
+
+    private void DetectNearbyObjects()
+    {
+        nearbyObjects.Clear();
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, 10f); // Adjust radius as needed
+        foreach (var hitCollider in hitColliders)
+        {
+            if (hitCollider.gameObject != gameObject)
+            {
+                nearbyObjects.Add(hitCollider.transform.position - transform.position);
+            }
+        }
+    }
+
+    public override void CollectObservations(VectorSensor sensor)
+    {
+        DetectNearbyObjects();
+
+        if (opponentGoal == null)
+        {
+            Debug.LogError("Opponent goal is not set.");
+            return;
+        }
+
+        // Add agent's and ball's position to observations
+        sensor.AddObservation(transform.localPosition);
+        sensor.AddObservation(GetComponent<Rigidbody>().velocity);
+        sensor.AddObservation(m_BallTouch);
+        sensor.AddObservation(opponentGoal.position - transform.position);
+
+        // Add memory of previous observations
+        foreach (var observation in previousObservations)
+        {
+            sensor.AddObservation(observation);
+        }
+
+        // Add nearby objects to observations
+        foreach (var obj in nearbyObjects)
+        {
+            sensor.AddObservation(obj);
+        }
+
+        // Store the current observation in memory
+        float[] currentObservation = new float[]
+        {
+            transform.localPosition.x, transform.localPosition.y, transform.localPosition.z,
+            GetComponent<Rigidbody>().velocity.x, GetComponent<Rigidbody>().velocity.y, GetComponent<Rigidbody>().velocity.z,
+            m_BallTouch,
+            opponentGoal.position.x - transform.position.x,
+            opponentGoal.position.y - transform.position.y,
+            opponentGoal.position.z - transform.position.z
+        };
+
+        if (previousObservations.Count >= memorySize)
+        {
+            previousObservations.Dequeue();
+        }
+        previousObservations.Enqueue(currentObservation);
     }
 }
