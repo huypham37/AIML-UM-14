@@ -259,9 +259,11 @@ public class AgentSoccer : Agent
         }
     }
 
-    public void CollectObservations()
+   public void CollectObservations()
 {
+    // Detect nearby objects and log their positions
     DetectNearbyObjects();
+    // Debug.Log("Nearby Objects Detected: " + (nearbyObjects.Count > 0 ? string.Join(", ", nearbyObjects) : "None"));
 
     if (opponentGoal == null)
     {
@@ -278,16 +280,23 @@ public class AgentSoccer : Agent
     vectorSensor.AddObservation(m_BallTouch);
     vectorSensor.AddObservation(opponentGoal.position - transform.position);
 
+    // Log the current agent's state
+    // Debug.Log("Agent Position: " + transform.localPosition);
+    // Debug.Log("Agent Velocity: " + agentRb.velocity);
+    // Debug.Log("Ball Touch: " + m_BallTouch);
+    // Debug.Log("Opponent Goal Offset: " + (opponentGoal.position - transform.position));
+
     // Memory of previous observations
     foreach (var observation in previousObservations)
     {
         vectorSensor.AddObservation(observation);
     }
 
-    // Add the positions of nearby objects to observations
+    // Add the positions of nearby objects to observations and log each nearby object's position
     foreach (var obj in nearbyObjects)
     {
         vectorSensor.AddObservation(obj);
+        // Debug.Log("Added Nearby Object Position to Observations: " + obj);
     }
 
     // Store the current observation in memory
@@ -300,12 +309,15 @@ public class AgentSoccer : Agent
         opponentGoal.position.z - transform.position.z
     };
 
-    // Update memory queue
+    // Update memory queue and log the current observation and memory status
     if (previousObservations.Count >= memorySize)
     {
         previousObservations.Dequeue();
+        // Debug.Log("Memory Full: Oldest Observation Removed");
     }
     previousObservations.Enqueue(currentObservation);
-}
 
+    // Debug.Log("Current Observation Stored: " + string.Join(", ", currentObservation));
+    // Debug.Log("Previous Observations Count: " + previousObservations.Count);
+}
 }
