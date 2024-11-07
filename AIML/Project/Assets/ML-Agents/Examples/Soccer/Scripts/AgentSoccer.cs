@@ -296,7 +296,7 @@ public class AgentSoccer : Agent
     foreach (var obj in nearbyObjects)
     {
         vectorSensor.AddObservation(obj);
-        // Debug.Log("Added Nearby Object Position to Observations: " + obj);
+       //  Debug.Log("Added Nearby Object Position to Observations: " + obj);
     }
 
     // Store the current observation in memory
@@ -317,7 +317,7 @@ public class AgentSoccer : Agent
     }
     previousObservations.Enqueue(currentObservation);
 
-    // Debug.Log("Current Observation Stored: " + string.Join(", ", currentObservation));
-    // Debug.Log("Previous Observations Count: " + previousObservations.Count);
+     // Debug.Log("Current Observation Stored: " + string.Join(", ", currentObservation));
+     // Debug.Log("Previous Observations Count: " + previousObservations.Count);
 }
 }
