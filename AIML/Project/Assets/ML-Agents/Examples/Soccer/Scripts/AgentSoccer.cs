@@ -124,7 +124,8 @@ public class AgentSoccer : Agent
         // Initialize environment parameters
         m_ResetParams = Academy.Instance.EnvironmentParameters;
 
-        vectorSensor = new VectorSensor(10, "AgentMemorySensor");
+        // Initialize vector sensor
+        vectorSensor = new VectorSensor(memorySize * 10, "Agent Memory");
 
     }
 
@@ -193,6 +194,8 @@ public class AgentSoccer : Agent
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
+        CollectObservations();
+
         // Existential rewards
         if (position == Position.Goalie)
         {
@@ -256,49 +259,53 @@ public class AgentSoccer : Agent
         }
     }
 
-    public override void CollectObservations(VectorSensor sensor)
+    public void CollectObservations()
+{
+    DetectNearbyObjects();
+
+    if (opponentGoal == null)
     {
-        DetectNearbyObjects();
-
-        if (opponentGoal == null)
-        {
-            Debug.LogError("Opponent goal is not set.");
-            return;
-        }
-
-        // Add agent's and ball's position to observations
-        sensor.AddObservation(transform.localPosition);
-        sensor.AddObservation(GetComponent<Rigidbody>().velocity);
-        sensor.AddObservation(m_BallTouch);
-        sensor.AddObservation(opponentGoal.position - transform.position);
-
-        // Add memory of previous observations
-        foreach (var observation in previousObservations)
-        {
-            sensor.AddObservation(observation);
-        }
-
-        // Add nearby objects to observations
-        foreach (var obj in nearbyObjects)
-        {
-            sensor.AddObservation(obj);
-        }
-
-        // Store the current observation in memory
-        float[] currentObservation = new float[]
-        {
-            transform.localPosition.x, transform.localPosition.y, transform.localPosition.z,
-            GetComponent<Rigidbody>().velocity.x, GetComponent<Rigidbody>().velocity.y, GetComponent<Rigidbody>().velocity.z,
-            m_BallTouch,
-            opponentGoal.position.x - transform.position.x,
-            opponentGoal.position.y - transform.position.y,
-            opponentGoal.position.z - transform.position.z
-        };
-
-        if (previousObservations.Count >= memorySize)
-        {
-            previousObservations.Dequeue();
-        }
-        previousObservations.Enqueue(currentObservation);
+        Debug.LogError("Opponent goal is not set.");
+        return;
     }
+
+    // Reset the vectorSensor each time CollectObservations is called
+    vectorSensor.Reset();
+
+    // Add the current agent position, velocity, and other relevant features
+    vectorSensor.AddObservation(transform.localPosition);
+    vectorSensor.AddObservation(agentRb.velocity);
+    vectorSensor.AddObservation(m_BallTouch);
+    vectorSensor.AddObservation(opponentGoal.position - transform.position);
+
+    // Memory of previous observations
+    foreach (var observation in previousObservations)
+    {
+        vectorSensor.AddObservation(observation);
+    }
+
+    // Add the positions of nearby objects to observations
+    foreach (var obj in nearbyObjects)
+    {
+        vectorSensor.AddObservation(obj);
+    }
+
+    // Store the current observation in memory
+    float[] currentObservation = {
+        transform.localPosition.x, transform.localPosition.y, transform.localPosition.z,
+        agentRb.velocity.x, agentRb.velocity.y, agentRb.velocity.z,
+        m_BallTouch,
+        opponentGoal.position.x - transform.position.x,
+        opponentGoal.position.y - transform.position.y,
+        opponentGoal.position.z - transform.position.z
+    };
+
+    // Update memory queue
+    if (previousObservations.Count >= memorySize)
+    {
+        previousObservations.Dequeue();
+    }
+    previousObservations.Enqueue(currentObservation);
+}
+
 }
