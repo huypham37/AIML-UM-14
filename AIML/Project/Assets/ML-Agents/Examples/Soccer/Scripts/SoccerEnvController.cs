@@ -86,8 +86,8 @@ public class SoccerEnvController : MonoBehaviour
             {
                 m_PurpleAgentGroup.RegisterAgent(item.Agent);
             }
-             //Load and assign model
-            LoadAndAssignModel();
+            //  //Load and assign model
+            // LoadAndAssignModel();
 
             // Check if the agent has RayPerceptionSensorComponent3D
             foreach (var playerInfo in AgentsList)
