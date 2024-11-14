@@ -27,12 +27,17 @@ namespace Unity.MLAgents.Sensors
                 // Check for compatibility with the other Agents' Sensors
                 if (m_SensorShapes.Count != sensors.Count)
                 {
-                    Debug.AssertFormat(
-                        m_SensorShapes.Count == sensors.Count,
-                        "Number of Sensors must match. {0} != {1}",
-                        m_SensorShapes.Count,
-                        sensors.Count
-                    );
+                    // Debug.LogWarningFormat(
+                    //     "Number of Sensors must match. {0} != {1}. Adjusting to match the current number of sensors.",
+                    //     m_SensorShapes.Count,
+                    //     sensors.Count
+                    // );
+                    // Adjust the sensor shapes to match the current number of sensors
+                    m_SensorShapes = new List<ObservationSpec>(sensors.Count);
+                    foreach (var sensor in sensors)
+                    {
+                        m_SensorShapes.Add(sensor.GetObservationSpec());
+                    }
                 }
                 for (var i = 0; i < Mathf.Min(m_SensorShapes.Count, sensors.Count); i++)
                 {

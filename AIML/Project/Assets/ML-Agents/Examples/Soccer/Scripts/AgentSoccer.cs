@@ -120,13 +120,16 @@ public class AgentSoccer : Agent
                 if (hitCollider.CompareTag("ball"))
                 {
                     ballSound = 1.0f;
+                    // Debug.Log("Sound detected from ball");
                 }
                 else if (hitCollider.CompareTag("blueAgent"))
                 {
+                    // Debug.Log("Sound detected from ally");
                     allySound = 1.0f;
                 }
                 else if (hitCollider.CompareTag("purpleAgent"))
-                {
+                {  
+                    // Debug.Log("Sound detected from enemy");
                     enemySound = 1.0f;
                 }
             }
@@ -159,6 +162,7 @@ public class AgentSoccer : Agent
         vectorSensor.AddObservation(soundObservations[0]);
         vectorSensor.AddObservation(soundObservations[1]);
         vectorSensor.AddObservation(soundObservations[2]);
+        // Debug.Log($"Sound Observations - Ball: {soundObservations[0]}, Ally: {soundObservations[1]}, Enemy: {soundObservations[2]}");
         float[] currentObservation = {
             transform.localPosition.x, transform.localPosition.y, transform.localPosition.z,
             agentRb.velocity.x, agentRb.velocity.y, agentRb.velocity.z,
