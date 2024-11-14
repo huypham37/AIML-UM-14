@@ -42,11 +42,23 @@ public class AgentSoccer : Agent
     public float rotSign;
     private Queue<float[]> previousObservations = new Queue<float[]>();
     private int memorySize = 5; // Number of previous frames to remember    
-    private List<Vector3> nearbyObjects = new List<Vector3>();
+
+    private GameObject ball; // Reference to the ball
+    private Rigidbody ballRb;
 
     EnvironmentParameters m_ResetParams;
     private VectorSensor vectorSensor;
-    private float visionAngle = 0f;
+    private float visionAngle = 90f; // Field of view for ball detection
+
+    private List<AudioSource> soundSources = new List<AudioSource>(); // Sound sources in the environment
+    private float soundDetectionRadius = 15f; // Extended radius to detect sounds
+
+    private List<Vector3> nearbyObjects = new List<Vector3>();
+
+    // Stamina system
+    private float stamina = 100f; // Max stamina
+    private float staminaRegenRate = 10f; // Regenerated per second
+    private float staminaDrainRate = 12f; // Drained per second while moving
 
     void OnValidate()
     {
@@ -85,6 +97,7 @@ public class AgentSoccer : Agent
             team = Team.Purple;
             initialPos = new Vector3(transform.position.x + 5f, .5f, transform.position.z);
             rotSign = -1f;
+            opponentGoal = GameObject.Find("GoalNetBlue")?.transform;
             opponentGoal = GameObject.Find("GoalNetBlue")?.transform;
         }
 
@@ -127,6 +140,27 @@ public class AgentSoccer : Agent
         // Initialize vector sensor
         vectorSensor = new VectorSensor(memorySize * 10, "Agent Memory");
 
+        // Get ball reference and ensure single instance
+        var balls = GameObject.FindGameObjectsWithTag("ball");
+        if (balls.Length > 1)
+        {
+            Debug.LogError("Multiple balls detected! Ensure only one ball exists in the scene.");
+        }
+        else if (balls.Length == 0)
+        {
+            Debug.LogError("No ball found in the scene!");
+        }
+        else
+        {
+            ball = balls[0];
+            ballRb = ball.GetComponent<Rigidbody>();
+        }
+
+        // Find all sound sources in the environment
+        foreach (var source in FindObjectsOfType<AudioSource>())
+        {
+            soundSources.Add(source);
+        }
     }
 
     public void MoveAgent(ActionSegment<int> act)
@@ -139,6 +173,7 @@ public class AgentSoccer : Agent
         var forwardAxis = act[0];
         var rightAxis = act[1];
         var rotateAxis = act[2];
+        var visionAxis = act[3]; // New action for vision direction
         var visionAxis = act[3]; // New action for vision direction
 
         // Handle forward/backward movement
@@ -186,10 +221,49 @@ public class AgentSoccer : Agent
                 break;
         }
 
+        // Adjust movement speed based on stamina levels
+        float speedMultiplier = 1.0f;
+        if (stamina < 60f && stamina >= 40f)
+        {
+            speedMultiplier = 0.75f; // Reduce speed slightly
+        }
+        else if (stamina < 40f)
+        {
+            speedMultiplier = 0.5f; // Reduce speed more significantly
+        }
+        dirToGo *= speedMultiplier;
+
         // Apply rotation
         transform.Rotate(rotateDir, Time.deltaTime * 100f);
-        // Apply movement
-        agentRb.AddForce(dirToGo * m_SoccerSettings.agentRunSpeed, ForceMode.VelocityChange);
+
+        // Update stamina if moving
+        bool isMoving = dirToGo != Vector3.zero;
+        UpdateStamina(isMoving);
+
+        // Apply movement if stamina permits
+        if (stamina > 0)
+        {
+            agentRb.AddForce(dirToGo * m_SoccerSettings.agentRunSpeed, ForceMode.VelocityChange);
+        }
+
+        // Debug log for stamina and speed
+        Debug.Log($"{name}: Stamina = {stamina}, Speed Multiplier = {speedMultiplier}");
+    }
+
+    private void UpdateStamina(bool isMoving)
+    {
+        if (isMoving)
+        {
+            stamina -= staminaDrainRate * Time.deltaTime;
+            stamina += staminaRegenRate * Time.deltaTime;
+            if (stamina < 5){
+                stamina = 40;
+            }
+        }       
+       
+
+        stamina = Mathf.Clamp(stamina, 0, 100);
+        AddReward(stamina / 100f - 0.5f); // Incentivize stamina conservation
     }
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
@@ -209,6 +283,98 @@ public class AgentSoccer : Agent
         MoveAgent(actionBuffers.DiscreteActions);
     }
 
+    public void CollectObservations()
+    {
+        // Ball-specific observations
+        var balls = GameObject.FindGameObjectsWithTag("ball");
+        if (balls.Length > 1)
+        {
+            Debug.LogError("Multiple balls detected! Observations may not be accurate.");
+            return;
+        }
+        else if (balls.Length == 0)
+        {
+            Debug.LogError("No ball found for observations!");
+            return;
+        }
+
+        ball = balls[0];
+
+        if (ball != null && ballRb != null)
+        {
+            Vector3 directionToBall = ball.transform.position - transform.position;
+            float distanceToBall = directionToBall.magnitude;
+            float angleToBall = Vector3.Angle(transform.forward, directionToBall);
+
+            // Only observe the ball if it is within the vision angle
+            if (angleToBall <= visionAngle)
+            {
+                vectorSensor.AddObservation(directionToBall.normalized);
+                vectorSensor.AddObservation(distanceToBall);
+                vectorSensor.AddObservation(ballRb.velocity);
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Ball or ball Rigidbody is missing!");
+        }
+
+        // Complex sound observations
+        foreach (var source in soundSources)
+        {
+            float distanceToSound = Vector3.Distance(transform.position, source.transform.position);
+            if (distanceToSound <= soundDetectionRadius)
+            {
+                Vector3 directionToSound = (source.transform.position - transform.position).normalized;
+                float intensity = source.volume / Mathf.Pow(distanceToSound, 2); // Inverse square law for sound intensity
+                vectorSensor.AddObservation(intensity);
+                vectorSensor.AddObservation(directionToSound);
+
+                // Categorize sound based on tags or other properties
+                if (source.CompareTag("ball"))
+                {
+                    vectorSensor.AddObservation(1f); // Specific marker for ball sounds
+                }
+                else
+                {
+                    vectorSensor.AddObservation(0f); // Generic sound marker
+                }
+            }
+        }
+
+        // Include memory of previous observations
+        foreach (var observation in previousObservations)
+        {
+            vectorSensor.AddObservation(observation);
+        }
+
+        // Add the positions of nearby objects to observations
+        foreach (var obj in nearbyObjects)
+        {
+            vectorSensor.AddObservation(obj);
+        }
+
+        // Store the current observation in memory
+        float[] currentObservation = {
+            transform.localPosition.x, transform.localPosition.y, transform.localPosition.z,
+            agentRb.velocity.x, agentRb.velocity.y, agentRb.velocity.z,
+            m_BallTouch,
+            opponentGoal.position.x - transform.position.x,
+            opponentGoal.position.y - transform.position.y,
+            opponentGoal.position.z - transform.position.z
+        };
+
+        // Update memory queue
+        if (previousObservations.Count >= memorySize)
+        {
+            previousObservations.Dequeue();
+        }
+        previousObservations.Enqueue(currentObservation);
+
+        // Add stamina observation
+        vectorSensor.AddObservation(stamina / 100f); // Normalize stamina
+    }
+
     public override void Heuristic(in ActionBuffers actionsOut)
     {
         var discreteActionsOut = actionsOut.DiscreteActions;
@@ -218,9 +384,34 @@ public class AgentSoccer : Agent
         if (Input.GetKey(KeyCode.S)) discreteActionsOut[0] = 2;
         if (Input.GetKey(KeyCode.A)) discreteActionsOut[2] = 1;
         if (Input.GetKey(KeyCode.D)) discreteActionsOut[2] = 2;
-        if (Input.GetKey(KeyCode.E)) discreteActionsOut[1] = 1;
-        if (Input.GetKey(KeyCode.Q)) discreteActionsOut[1] = 2;
         if (Input.GetKey(KeyCode.Space)) discreteActionsOut[3] = 1; // New passing action
+    }
+
+    public override void OnEpisodeBegin()
+    {
+        // Reset ball touch coefficient
+        m_BallTouch = m_ResetParams.GetWithDefault("ball_touch", 0);
+
+        // Reset ball position if required
+        var balls = GameObject.FindGameObjectsWithTag("ball");
+        if (balls.Length > 1)
+        {
+            Debug.LogError("Multiple balls detected! Reset aborted.");
+            return;
+        }
+        else if (balls.Length == 0)
+        {
+            Debug.LogError("No ball found for reset!");
+            return;
+        }
+
+        ball = balls[0];
+        ball.transform.position = new Vector3(0, 0.5f, 0); // Example reset position
+        ballRb.velocity = Vector3.zero;
+        ballRb.angularVelocity = Vector3.zero;
+
+        // Reset stamina
+        stamina = 100f;
     }
 
     void OnCollisionEnter(Collision c)
@@ -234,9 +425,14 @@ public class AgentSoccer : Agent
 
         if (c.gameObject.CompareTag("ball"))
         {
+            if (c.gameObject != ball)
+            {
+                Debug.LogWarning("Collision with unexpected ball instance!");
+                return;
+            }
             AddReward(.2f * m_BallTouch);
             var dir = (c.contacts[0].point - transform.position).normalized;
-            c.gameObject.GetComponent<Rigidbody>().AddForce(dir * force);
+            ballRb.AddForce(dir * force);
         }
     }
 
