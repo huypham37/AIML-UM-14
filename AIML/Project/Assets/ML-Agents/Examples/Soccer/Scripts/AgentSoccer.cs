@@ -45,7 +45,7 @@ public class AgentSoccer : Agent
         var behaviorParameters = GetComponent<BehaviorParameters>();
         if (behaviorParameters != null)
         {
-            behaviorParameters.BrainParameters.ActionSpec = ActionSpec.MakeDiscrete(3, 3, 3, 2);
+            behaviorParameters.BrainParameters.ActionSpec = ActionSpec.MakeDiscrete(3, 3, 3, 3); // Ensure the ActionSpec matches the number of actions
         }
     }
 
@@ -72,7 +72,12 @@ public class AgentSoccer : Agent
             AddReward(-m_Existential);
         }
         MoveAgent(actionBuffers.DiscreteActions);
-       //  visionAngle = actionBuffers.DiscreteActions[4] * 10f;
+
+        // Update vision angle based on actions or heuristic
+        if (actionBuffers.DiscreteActions.Length > 4)
+        {
+            visionAngle = actionBuffers.DiscreteActions[4] * 10f; // Example: Adjust vision angle based on action
+        }
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)
@@ -131,16 +136,11 @@ public class AgentSoccer : Agent
         {
             vectorSensor.AddObservation(obj);
         }
-
         float[] soundObservations = soundSensor.DetectSound();
         vectorSensor.AddObservation(soundObservations[0]);
         vectorSensor.AddObservation(soundObservations[1]);
         vectorSensor.AddObservation(soundObservations[2]);
         // Debug.Log($"Sound Observations - Ball: {soundObservations[0]}, Ally: {soundObservations[1]}, Enemy: {soundObservations[2]}");
-        
-        // Vision Angle Observation
-        // vectorSensor.AddObservation(visionAngle);
-
         float[] currentObservation = {
             transform.localPosition.x, transform.localPosition.y, transform.localPosition.z,
             agentRb.velocity.x, agentRb.velocity.y, agentRb.velocity.z,
