@@ -38,6 +38,8 @@ public class AgentSoccer : Agent
     public EnvironmentParameters m_ResetParams;
     public VectorSensor vectorSensor;
 
+    private SoundSensor soundSensor;
+
     void OnValidate()
     {
         var behaviorParameters = GetComponent<BehaviorParameters>();
@@ -50,6 +52,7 @@ public class AgentSoccer : Agent
     public override void Initialize()
     {
         AgentInitializer.Initialize(this);
+        soundSensor = new SoundSensor(gameObject, hearingRadius);
     }
 
     public void MoveAgent(ActionSegment<int> act)
@@ -69,6 +72,7 @@ public class AgentSoccer : Agent
             AddReward(-m_Existential);
         }
         MoveAgent(actionBuffers.DiscreteActions);
+       //  visionAngle = actionBuffers.DiscreteActions[4] * 10f;
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)
@@ -106,37 +110,6 @@ public class AgentSoccer : Agent
         }
     }
 
-    public float[] DetectSound()
-    {
-        float ballSound = 0.0f;
-        float allySound = 0.0f;
-        float enemySound = 0.0f;
-
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, hearingRadius);
-        foreach (var hitCollider in hitColliders)
-        {
-            if (hitCollider.gameObject != gameObject)
-            {
-                if (hitCollider.CompareTag("ball"))
-                {
-                    ballSound = 1.0f;
-                    // Debug.Log("Sound detected from ball");
-                }
-                else if (hitCollider.CompareTag("blueAgent"))
-                {
-                    // Debug.Log("Sound detected from ally");
-                    allySound = 1.0f;
-                }
-                else if (hitCollider.CompareTag("purpleAgent"))
-                {  
-                    // Debug.Log("Sound detected from enemy");
-                    enemySound = 1.0f;
-                }
-            }
-        }
-        return new float[] { ballSound, allySound, enemySound };
-    }
-
     public void CollectObservations()
     {
         DetectNearbyObjects();
@@ -158,11 +131,16 @@ public class AgentSoccer : Agent
         {
             vectorSensor.AddObservation(obj);
         }
-        float[] soundObservations = DetectSound();
+
+        float[] soundObservations = soundSensor.DetectSound();
         vectorSensor.AddObservation(soundObservations[0]);
         vectorSensor.AddObservation(soundObservations[1]);
         vectorSensor.AddObservation(soundObservations[2]);
         // Debug.Log($"Sound Observations - Ball: {soundObservations[0]}, Ally: {soundObservations[1]}, Enemy: {soundObservations[2]}");
+        
+        // Vision Angle Observation
+        // vectorSensor.AddObservation(visionAngle);
+
         float[] currentObservation = {
             transform.localPosition.x, transform.localPosition.y, transform.localPosition.z,
             agentRb.velocity.x, agentRb.velocity.y, agentRb.velocity.z,
