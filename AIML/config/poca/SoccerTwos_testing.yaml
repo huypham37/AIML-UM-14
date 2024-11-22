@@ -2,7 +2,7 @@ behaviors:
   SoccerTwos:
     trainer_type: poca
     hyperparameters:
-      batch_size: 2048
+      batch_size: 1024
       buffer_size: 20480
       learning_rate: 0.0003
       beta: 0.005
@@ -12,7 +12,7 @@ behaviors:
       learning_rate_schedule: constant
     network_settings:
       normalize: false
-      hidden_units: 512
+      hidden_units: 256 #Simpler network
       num_layers: 2
       vis_encode_type: simple
     reward_signals:
@@ -20,9 +20,9 @@ behaviors:
         gamma: 0.99
         strength: 1.0
     keep_checkpoints: 5
-    max_steps: 5000000
+    max_steps: 500000 # Shorter training time
     time_horizon: 1000
-    summary_freq: 10000
+    summary_freq: 10000 # More frequent logging
     self_play:
       save_steps: 50000
       team_change: 200000

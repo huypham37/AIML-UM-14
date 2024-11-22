@@ -1,7 +1,14 @@
 using System.Collections.Generic;
+using System.IO;
 using Unity.MLAgents;
+using Unity.MLAgents.SideChannels;
+using Unity.MLAgents.Sensors;
 using UnityEngine;
-using UnityEngine.Serialization;
+using Unity.MLAgents.Policies;
+using Unity.Sentis;
+using Unity.Sentis.ONNX;
+using Random = UnityEngine.Random;
+using UnityEditor;
 
 public class SoccerEnvController : MonoBehaviour
 {
@@ -48,20 +55,18 @@ public class SoccerEnvController : MonoBehaviour
 
     private int m_ResetTimer;
 
-    // Add these new variables
-    [FormerlySerializedAs("m_GoalsScored")] public int goalsScored;
-    [FormerlySerializedAs("m_GoalsConceded")] public int goalsConceded;
-    [FormerlySerializedAs("m_PossessionTime")] public float possessionTime;
-    [FormerlySerializedAs("m_PassesAttempted")] public int passesAttempted;
-    public int m_PassesCompleted;
-    public float m_LastPossessionChangeTime;
-    public Team m_LastPossessionTeam;
+    private int blueTeamGoals = 0;
+    private int purpleTeamGoals = 0;
+    private int blueTeamWins = 0;
+    private StatsRecorder statsRecorder;
 
-    private bool m_PassInProgress = false;
+    private int m_EpisodeCount = 0;
+    private int m_BlueTeamScore = 0;
+    private int m_PurpleTeamScore = 0;
+
 
     void Start()
     {
-
         m_SoccerSettings = FindObjectOfType<SoccerSettings>();
         // Initialize TeamManager
         m_BlueAgentGroup = new SimpleMultiAgentGroup();
@@ -81,8 +86,21 @@ public class SoccerEnvController : MonoBehaviour
             {
                 m_PurpleAgentGroup.RegisterAgent(item.Agent);
             }
+            //  //Load and assign model
+            // LoadAndAssignModel();
+
+            // Check if the agent has RayPerceptionSensorComponent3D
+            foreach (var playerInfo in AgentsList)
+            {
+                var agent = playerInfo.Agent;
+                var rayPerceptionSensors = agent.GetComponent<RayPerceptionSensorComponent3D>();
+                Debug.Log($"Agent {agent.name} has {rayPerceptionSensors.RayLength} ray perception sensors");
+                Debug.Log($"Agent {agent.name} has {rayPerceptionSensors.RaysPerDirection} rays per direction");
+            }
+
         }
         ResetScene();
+        statsRecorder = Academy.Instance.StatsRecorder;
     }
 
     void FixedUpdate()
@@ -93,6 +111,33 @@ public class SoccerEnvController : MonoBehaviour
             m_BlueAgentGroup.GroupEpisodeInterrupted();
             m_PurpleAgentGroup.GroupEpisodeInterrupted();
             ResetScene();
+        }
+    }
+
+
+    private void LoadAndAssignModel()
+    {
+        // Instead of loading as serialized model, load as ModelAsset
+        ModelAsset modelAsset = Resources.Load("SoccerTwos-Luca") as ModelAsset;
+
+        if(modelAsset == null){
+            Debug.LogError("Failed to load model asset + ");
+            return;
+        }
+
+        foreach(var agent in AgentsList){
+            string behaviourName = agent.Agent.GetComponent<BehaviorParameters>().BehaviorName;
+            InferenceDevice inferenceDevice = InferenceDevice.Burst;
+            var behaviorParameters = agent.Agent.GetComponent<BehaviorParameters>();
+            if(behaviorParameters != null){
+                agent.Agent.SetModel(behaviourName, modelAsset, inferenceDevice);  // Now using ModelAsset
+                behaviorParameters.BehaviorType = BehaviorType.InferenceOnly;
+            }
+            else
+            {
+                Debug.LogWarning($"BehaviorParameters component not found on agent '{agent.Agent.name}'.");
+            }
+            Debug.Log($"Model assigned to agent '{agent.Agent.name}'");
         }
     }
 
@@ -110,48 +155,66 @@ public class SoccerEnvController : MonoBehaviour
 
     public void GoalTouched(Team scoredTeam)
     {
-        // Debug.Log($"Goal scored by team: {scoredTeam}");
-
         if (scoredTeam == Team.Blue)
         {
+            m_BlueTeamScore++;
             m_BlueAgentGroup.AddGroupReward(1 - (float)m_ResetTimer / MaxEnvironmentSteps);
             m_PurpleAgentGroup.AddGroupReward(-1);
-            goalsScored++;
-            Debug.Log("Goal Scored by Blue, goalsScored: " + goalsScored);
         }
         else
         {
+            m_PurpleTeamScore++;
             m_PurpleAgentGroup.AddGroupReward(1 - (float)m_ResetTimer / MaxEnvironmentSteps);
             m_BlueAgentGroup.AddGroupReward(-1);
-            goalsConceded++;
-            Debug.Log("Goal Scored by Purple, goalsScored: " + goalsScored);
         }
 
-        // Record stats
-        Academy.Instance.StatsRecorder.Add("GoalsScored", goalsScored);
-        Academy.Instance.StatsRecorder.Add("GoalsConceded", goalsConceded);
-        Academy.Instance.StatsRecorder.Add("PossessionTime", possessionTime);
-        Academy.Instance.StatsRecorder.Add("PassesAttempted", passesAttempted);
-        Academy.Instance.StatsRecorder.Add("PassesCompleted", m_PassesCompleted);
+        // End episode and reset
+        EndEpisode();
+    }
+
+    private void EndEpisode()
+    {
+        m_EpisodeCount++;
+
+        // Update total goals and wins
+        blueTeamGoals += m_BlueTeamScore;
+        purpleTeamGoals += m_PurpleTeamScore;
+        if (m_BlueTeamScore > m_PurpleTeamScore)
+        {
+            blueTeamWins++;
+        }
+
+        // Calculate stats
+        float blueWinRate = (float)blueTeamWins / m_EpisodeCount;
+        float avgBlueGoals = (float)blueTeamGoals / m_EpisodeCount;
+        float avgPurpleGoals = (float)purpleTeamGoals / m_EpisodeCount;
+
+        // Log stats to TensorBoard
+        statsRecorder.Add("Blue Team Win Rate", blueWinRate);
+        statsRecorder.Add("Avg Blue Team Goals", avgBlueGoals);
+        statsRecorder.Add("Avg Purple Team Goals", avgPurpleGoals);
+
+        // Log to console every 100 episodes
+        if (m_EpisodeCount % 100 == 0)
+        {
+            Debug.Log($"Episode {m_EpisodeCount} completed:");
+            Debug.Log($"Blue Team Win Rate: {blueWinRate:F4}");
+            Debug.Log($"Avg Blue Team Goals: {avgBlueGoals:F4}");
+            Debug.Log($"Avg Purple Team Goals: {avgPurpleGoals:F4}");
+            Debug.Log($"Last 100 episodes: Blue {blueTeamWins % 100} wins, {blueTeamGoals - (m_EpisodeCount - 100 > 0 ? blueTeamGoals / (m_EpisodeCount - 100) * 100 : 0)} goals");
+            Debug.Log("--------------------");
+        }
 
         m_PurpleAgentGroup.EndGroupEpisode();
         m_BlueAgentGroup.EndGroupEpisode();
         ResetScene();
     }
 
-
     public void ResetScene()
     {
         m_ResetTimer = 0;
-
-        // Reset the new variables
-        goalsScored = 0;
-        goalsConceded = 0;
-        possessionTime = 0f;
-        passesAttempted = 0;
-        m_PassesCompleted = 0;
-        m_LastPossessionChangeTime = Time.time;
-        m_LastPossessionTeam = Team.Blue; // Assume Blue starts with possession
+        m_BlueTeamScore = 0;
+        m_PurpleTeamScore = 0;
 
         //Reset Agents
         foreach (var item in AgentsList)
@@ -168,43 +231,5 @@ public class SoccerEnvController : MonoBehaviour
 
         //Reset Ball
         ResetBall();
-
-        // Record stats
-        Academy.Instance.StatsRecorder.Add("GoalsScored", goalsScored);
-        Academy.Instance.StatsRecorder.Add("GoalsConceded", goalsConceded);
-        Academy.Instance.StatsRecorder.Add("PossessionTime", possessionTime);
-        Academy.Instance.StatsRecorder.Add("PassesAttempted", passesAttempted);
-        Academy.Instance.StatsRecorder.Add("PassesCompleted", m_PassesCompleted);
-    }
-
-    public void UpdatePossessionTime(Team currentTeam)
-    {
-        if (m_LastPossessionTeam != currentTeam)
-        {
-            float currentTime = Time.time;
-            possessionTime += currentTime - m_LastPossessionChangeTime;
-            m_LastPossessionChangeTime = currentTime;
-            m_LastPossessionTeam = currentTeam;
-        }
-    }
-
-    public void AttemptPass()
-    {
-        passesAttempted++;
-        m_PassInProgress = true;
-    }
-
-    public void CompletePass()
-    {
-        if (m_PassInProgress)
-        {
-            m_PassesCompleted++;
-            m_PassInProgress = false;
-        }
-    }
-
-    public bool IsPassInProgress()
-    {
-        return m_PassInProgress;
     }
 }
