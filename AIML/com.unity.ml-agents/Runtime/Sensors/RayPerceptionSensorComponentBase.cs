@@ -269,21 +269,19 @@ namespace Unity.MLAgents.Sensors
         /// </param>
         /// <returns></returns>
         internal static float[] GetRayAngles(int raysPerDirection, float maxRayDegrees)
-{
-    // Limit maxRayDegrees to 90 or less to prevent rays from going backward.
-    maxRayDegrees = Mathf.Clamp(maxRayDegrees, 0, 90);
+        {
+            // Example:
+            // { 90 - 3*delta, 90 - 2*delta, ..., 90, 90 + delta, ..., 90 + 3*delta }
+            var anglesOut = new float[2 * raysPerDirection + 1];
+            var delta = maxRayDegrees / raysPerDirection;
 
-    var anglesOut = new float[2 * raysPerDirection + 1];
-    var delta = maxRayDegrees / raysPerDirection;
+            for (var i = 0; i < 2 * raysPerDirection + 1; i++)
+            {
+                anglesOut[i] = 90 + (i - raysPerDirection) * delta;
+            }
 
-    for (var i = 0; i < 2 * raysPerDirection + 1; i++)
-    {
-        anglesOut[i] = 90 + (i - raysPerDirection) * delta;
-    }
-
-    return anglesOut;
-}
-
+            return anglesOut;
+        }
 
         /// <summary>
         /// Get the RayPerceptionInput that is used by the <see cref="RayPerceptionSensor"/>.

@@ -296,21 +296,18 @@ namespace Unity.MLAgents.Inference
                 else
                 {
                     var tensorOffset = 0;
+
                     // Write each sensor consecutively to the tensor
                     for (var sensorIndexIndex = 0; sensorIndexIndex < m_SensorIndices.Count; sensorIndexIndex++)
                     {
                         var sensorIndex = m_SensorIndices[sensorIndexIndex];
-                        if (sensorIndex >= info.sensors.Count)
-                        {
-                            // Skip if the sensor index is out of range
-                            continue;
-                        }
                         var sensor = info.sensors[sensorIndex];
                         m_ObservationWriter.SetTarget(tensorProxy, agentIndex, tensorOffset);
                         var numWritten = sensor.Write(m_ObservationWriter);
                         tensorOffset += numWritten;
                     }
                 }
+
                 agentIndex++;
             }
         }

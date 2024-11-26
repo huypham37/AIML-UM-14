@@ -87,16 +87,16 @@ public class SoccerEnvController : MonoBehaviour
                 m_PurpleAgentGroup.RegisterAgent(item.Agent);
             }
             //  //Load and assign model
-            // LoadAndAssignModel();
+            LoadAndAssignModel();
 
             // Check if the agent has RayPerceptionSensorComponent3D
-            foreach (var playerInfo in AgentsList)
-            {
-                var agent = playerInfo.Agent;
-                var rayPerceptionSensors = agent.GetComponent<RayPerceptionSensorComponent3D>();
-                Debug.Log($"Agent {agent.name} has {rayPerceptionSensors.RayLength} ray perception sensors");
-                Debug.Log($"Agent {agent.name} has {rayPerceptionSensors.RaysPerDirection} rays per direction");
-            }
+            // foreach (var playerInfo in AgentsList)
+            // {
+            //     var agent = playerInfo.Agent;
+            //     var rayPerceptionSensors = agent.GetComponent<RayPerceptionSensorComponent3D>();
+            //     Debug.Log($"Agent {agent.name} has {rayPerceptionSensors.RayLength} ray perception sensors");
+            //     Debug.Log($"Agent {agent.name} has {rayPerceptionSensors.RaysPerDirection} rays per direction");
+            // }
 
         }
         ResetScene();
@@ -118,7 +118,7 @@ public class SoccerEnvController : MonoBehaviour
     private void LoadAndAssignModel()
     {
         // Instead of loading as serialized model, load as ModelAsset
-        ModelAsset modelAsset = Resources.Load("SoccerTwos-Luca") as ModelAsset;
+        ModelAsset modelAsset = Resources.Load("SoccerTwos_10m") as ModelAsset;
 
         if(modelAsset == null){
             Debug.LogError("Failed to load model asset + ");
