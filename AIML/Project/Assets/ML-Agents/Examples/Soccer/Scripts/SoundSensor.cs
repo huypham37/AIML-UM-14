@@ -31,7 +31,7 @@ public class SoundSensor : ISensor
 
     public int Write(ObservationWriter writer)
     {
-         return 0;
+        return 0;
     }
 
     public float[] DetectSound()
