@@ -35,32 +35,33 @@ public class SoundSensor : ISensor
     }
 
     public float[] DetectSound()
-    {
-        float ballSound = 0.0f;
-        float allySound = 0.0f;
-        float enemySound = 0.0f;
+{
+    float ballSound = 0.0f;
+    float allySound = 0.0f;
+    float enemySound = 0.0f;
 
-        Collider[] hitColliders = Physics.OverlapSphere(agent.transform.position, hearingRadius);
-        foreach (var hitCollider in hitColliders)
+    Collider[] hitColliders = Physics.OverlapSphere(agent.transform.position, hearingRadius);
+    foreach (var hitCollider in hitColliders)
+    {
+        if (hitCollider.gameObject != agent)
         {
-            if (hitCollider.gameObject != agent)
+            if (hitCollider.CompareTag("ball"))
             {
-                if (hitCollider.CompareTag("ball"))
-                {
-                    ballSound = 1.0f;
-                }
-                else if (hitCollider.CompareTag("blueAgent"))
-                {
-                    allySound = 1.0f;
-                }
-                else if (hitCollider.CompareTag("purpleAgent"))
-                {
-                    enemySound = 1.0f;
-                }
+                ballSound = 1.0f;
+            }
+            else if (hitCollider.CompareTag("blueAgent"))
+            {
+                allySound = 1.0f;
+            }
+            else if (hitCollider.CompareTag("purpleAgent"))
+            {
+                enemySound = 1.0f;
             }
         }
-        return new float[] { ballSound, allySound, enemySound };
     }
+    // Debug.Log("Detected sounds - Ball: " + ballSound + ", Ally: " + allySound + ", Enemy: " + enemySound);
+    return new float[] { ballSound, allySound, enemySound };
+}
 
     public void Update() { }
 

@@ -137,7 +137,7 @@ public class SoccerEnvController : MonoBehaviour
             {
                 Debug.LogWarning($"BehaviorParameters component not found on agent '{agent.Agent.name}'.");
             }
-            Debug.Log($"Model assigned to agent '{agent.Agent.name}'");
+            // Debug.Log($"Model assigned to agent '{agent.Agent.name}'");
         }
     }
 

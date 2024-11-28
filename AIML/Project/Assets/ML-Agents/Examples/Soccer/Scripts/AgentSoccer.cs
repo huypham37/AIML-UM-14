@@ -142,7 +142,7 @@ public class AgentSoccer : Agent
 
         vectorSensor = new VectorSensor(memorySize * 10, "Agent Memory");
         soundSensor = new SoundSensor(gameObject, hearingRadius);
-        observationHandler = new ObservationHandler(transform, agentRb, opponentGoal, vectorSensor, soundSensor, memorySize, m_BallTouch);
+        observationHandler = new ObservationHandler(transform, agentRb, opponentGoal, vectorSensor, soundSensor, memorySize, m_BallTouch, visionAngle);
     }
 
     public void MoveAgent(ActionSegment<int> act)
@@ -210,10 +210,11 @@ public class AgentSoccer : Agent
         MoveAgent(actionBuffers.DiscreteActions);
 
         // Update vision angle based on actions or heuristic
-        if (actionBuffers.DiscreteActions.Length > 4)
-        {
-            visionAngle = actionBuffers.DiscreteActions[4] * 10f; // Example: Adjust vision angle based on action
-        }
+       if (actionBuffers.DiscreteActions.Length > 2) {
+        int visionAction = actionBuffers.DiscreteActions[2];
+        visionAngle = MapVisionAngle(visionAction);
+        // Debug.Log($"Vision angle set to: {visionAngle} degrees");
+    }
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)
@@ -250,4 +251,17 @@ public class AgentSoccer : Agent
         // Reset ball touch coefficient
         m_BallTouch = m_ResetParams.GetWithDefault("ball_touch", 0);
     }
+    private float MapVisionAngle(int action)
+{
+    switch (action)
+    {
+        case 0: return -30f; 
+        case 1: return -15f; 
+        case 2: return 0f;  
+        case 3: return 15f;  
+        case 4: return 30f;  
+        default: return 0f;  
+    }
+}
+
 }
