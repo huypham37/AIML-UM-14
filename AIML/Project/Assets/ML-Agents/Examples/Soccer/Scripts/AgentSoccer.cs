@@ -42,11 +42,12 @@ public class AgentSoccer : Agent
     public float rotSign;
     public List<Vector3> nearbyObjects = new List<Vector3>();
     public VectorSensor vectorSensor;
-    private SoundSensor soundSensor;
+    public SoundSensor soundSensor;
     public Queue<float[]> previousObservations = new Queue<float[]>();
     public int memorySize = 5;
     public float hearingRadius = 10f;
     public float visionAngle = 0f;
+    public ObservationHandler observationHandler;
 
     EnvironmentParameters m_ResetParams;
 
@@ -141,7 +142,7 @@ public class AgentSoccer : Agent
 
         vectorSensor = new VectorSensor(memorySize * 10, "Agent Memory");
         soundSensor = new SoundSensor(gameObject, hearingRadius);
-
+        observationHandler = new ObservationHandler(transform, agentRb, opponentGoal, vectorSensor, soundSensor, memorySize, m_BallTouch);
     }
 
     public void MoveAgent(ActionSegment<int> act)
@@ -197,7 +198,7 @@ public class AgentSoccer : Agent
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
-        CollectObservations();
+        observationHandler.CollectObservations();
         if (position == Position.Goalie)
         {
             AddReward(m_Existential);
@@ -248,64 +249,5 @@ public class AgentSoccer : Agent
     {
         // Reset ball touch coefficient
         m_BallTouch = m_ResetParams.GetWithDefault("ball_touch", 0);
-    }
-
-    private void DetectNearbyObjects()
-    {
-        nearbyObjects.Clear();
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, 10f);
-        foreach (var hitCollider in hitColliders)
-        {
-            if (hitCollider.gameObject != gameObject)
-            {
-                nearbyObjects.Add(hitCollider.transform.position - transform.position);
-            }
-        }
-    }
-
-
-    public void CollectObservations()
-    {
-        DetectNearbyObjects();
-        if (opponentGoal == null)
-        {
-            Debug.LogError("Opponent goal is not set.");
-            return;
-        }
-        if (vectorSensor == null)
-        {
-            vectorSensor = new VectorSensor(memorySize * 10, "Agent Memory");
-        }
-        vectorSensor.Reset();
-        vectorSensor.AddObservation(transform.localPosition);
-        vectorSensor.AddObservation(agentRb.velocity);
-        vectorSensor.AddObservation(m_BallTouch);
-        vectorSensor.AddObservation(opponentGoal.position - transform.position);
-        foreach (var observation in previousObservations)
-        {
-            vectorSensor.AddObservation(observation);
-        }
-        foreach (var obj in nearbyObjects)
-        {
-            vectorSensor.AddObservation(obj);
-        }
-        float[] soundObservations = soundSensor.DetectSound();
-        vectorSensor.AddObservation(soundObservations[0]);
-        vectorSensor.AddObservation(soundObservations[1]);
-        vectorSensor.AddObservation(soundObservations[2]);
-        // Debug.Log($"Sound Observations - Ball: {soundObservations[0]}, Ally: {soundObservations[1]}, Enemy: {soundObservations[2]}");
-        float[] currentObservation = {
-            transform.localPosition.x, transform.localPosition.y, transform.localPosition.z,
-            agentRb.velocity.x, agentRb.velocity.y, agentRb.velocity.z,
-            m_BallTouch,
-            opponentGoal.position.x - transform.position.x,
-            opponentGoal.position.y - transform.position.y,
-            opponentGoal.position.z - transform.position.z
-        };
-        if (previousObservations.Count >= memorySize)
-        {
-            previousObservations.Dequeue();
-        }
-        previousObservations.Enqueue(currentObservation);
     }
 }
