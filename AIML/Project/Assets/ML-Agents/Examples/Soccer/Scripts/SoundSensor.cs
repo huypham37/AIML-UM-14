@@ -19,6 +19,7 @@ public class SoundSensor : ISensor
         return m_Name;
     }
 
+
     public ObservationSpec GetObservationSpec()
     {
         return ObservationSpec.Vector(3); // 3 floats: ball, ally, enemy sound intensities
@@ -31,7 +32,9 @@ public class SoundSensor : ISensor
 
     public int Write(ObservationWriter writer)
     {
-        return 0;
+        float[] soundData = DetectSound(); // Retrieves sound intensities
+        writer.AddList(soundData);
+        return soundData.Length;           // Returns the number of written values
     }
 
     public float[] DetectSound()

@@ -2316,6 +2316,7 @@ MonoBehaviour:
   nearbyObjects: []
   memorySize: 5
   hearingRadius: 10
+  visionAngle: 0
 --- !u!114 &114320493772006642
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2605,6 +2606,7 @@ MonoBehaviour:
   nearbyObjects: []
   memorySize: 5
   hearingRadius: 10
+  visionAngle: 0
 --- !u!114 &114516244030127556
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2738,13 +2740,6 @@ MonoBehaviour:
     StartingPos: {x: 0, y: 0, z: 0}
     StartingRot: {x: 0, y: 0, z: 0, w: 0}
     Rb: {fileID: 0}
-  goalsScored: 0
-  goalsConceded: 0
-  possessionTime: 0
-  passesAttempted: 0
-  m_PassesCompleted: 0
-  m_LastPossessionChangeTime: 0
-  m_LastPossessionTeam: 0
 --- !u!1 &1366507812774098
 GameObject:
   m_ObjectHideFlags: 0
@@ -4551,6 +4546,7 @@ MonoBehaviour:
   nearbyObjects: []
   memorySize: 5
   hearingRadius: 10
+  visionAngle: 0
 --- !u!114 &1023485123796557062
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5102,6 +5098,7 @@ MonoBehaviour:
   nearbyObjects: []
   memorySize: 5
   hearingRadius: 10
+  visionAngle: 0
 --- !u!114 &2562571719799803906
 MonoBehaviour:
   m_ObjectHideFlags: 0

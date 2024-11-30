@@ -45,7 +45,7 @@ public class AgentSoccer : Agent
     private SoundSensor soundSensor;
     public Queue<float[]> previousObservations = new Queue<float[]>();
     public int memorySize = 5;
-    public float hearingRadius = 10f;
+    public float hearingRadius = 15f;
     public float visionAngle = 0f;
 
     EnvironmentParameters m_ResetParams;
@@ -134,13 +134,11 @@ public class AgentSoccer : Agent
 
         SoccerEnvController controller = GetComponentInParent<SoccerEnvController>();
 
-        // if (controller != null)
-        // {
-        //     controller.UpdatePossessionTime(this.team);
-        // }
+
 
         vectorSensor = new VectorSensor(memorySize * 10, "Agent Memory");
         soundSensor = new SoundSensor(gameObject, hearingRadius);
+        
 
     }
 

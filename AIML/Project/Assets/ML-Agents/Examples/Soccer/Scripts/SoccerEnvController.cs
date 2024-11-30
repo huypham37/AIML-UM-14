@@ -118,7 +118,7 @@ public class SoccerEnvController : MonoBehaviour
     private void LoadAndAssignModel()
     {
         // Instead of loading as serialized model, load as ModelAsset
-        ModelAsset modelAsset = Resources.Load("SoccerTwos_10m") as ModelAsset;
+        ModelAsset modelAsset = Resources.Load("SoccerTwos_10m_w") as ModelAsset;
 
         if(modelAsset == null){
             Debug.LogError("Failed to load model asset + ");
