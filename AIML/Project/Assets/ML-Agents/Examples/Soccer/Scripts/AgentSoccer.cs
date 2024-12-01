@@ -1,4 +1,4 @@
-using System.Collections.Generic; // For Queue<>
+using System.Collections.Generic;
 using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
@@ -42,11 +42,12 @@ public class AgentSoccer : Agent
     public float rotSign;
     public List<Vector3> nearbyObjects = new List<Vector3>();
     public VectorSensor vectorSensor;
-    private SoundSensor soundSensor;
+    public SoundSensor soundSensor;
     public Queue<float[]> previousObservations = new Queue<float[]>();
     public int memorySize = 5;
-    public float hearingRadius = 15f;
+    public float hearingRadius = 10f;
     public float visionAngle = 0f;
+    public ObservationHandler observationHandler;
 
     EnvironmentParameters m_ResetParams;
 
@@ -134,12 +135,14 @@ public class AgentSoccer : Agent
 
         SoccerEnvController controller = GetComponentInParent<SoccerEnvController>();
 
-
+        // if (controller != null)
+        // {
+        //     controller.UpdatePossessionTime(this.team);
+        // }
 
         vectorSensor = new VectorSensor(memorySize * 10, "Agent Memory");
         soundSensor = new SoundSensor(gameObject, hearingRadius);
-        
-
+        observationHandler = new ObservationHandler(transform, agentRb, opponentGoal, vectorSensor, soundSensor, memorySize, m_BallTouch, visionAngle);
     }
 
     public void MoveAgent(ActionSegment<int> act)
@@ -193,38 +196,44 @@ public class AgentSoccer : Agent
         agentRb.AddForce(dirToGo * m_SoccerSettings.agentRunSpeed, ForceMode.VelocityChange);
     }
 
-    public override void OnActionReceived(ActionBuffers actionBuffers)
-    {
-        CollectObservations();
-        if (position == Position.Goalie)
-        {
-            AddReward(m_Existential);
-        }
-        else if (position == Position.Striker)
-        {
-            AddReward(-m_Existential);
-        }
-        MoveAgent(actionBuffers.DiscreteActions);
+   public override void OnActionReceived(ActionBuffers actionBuffers)
+{
+    MoveAgent(actionBuffers.DiscreteActions);
 
-        // Update vision angle based on actions or heuristic
-        if (actionBuffers.DiscreteActions.Length > 4)
-        {
-            visionAngle = actionBuffers.DiscreteActions[4] * 10f; // Example: Adjust vision angle based on action
-        }
+    // Update vision angle from the third action (index 2)
+    if (actionBuffers.DiscreteActions.Length > 2)
+    {
+        int visionAction = actionBuffers.DiscreteActions[2];
+        visionAngle = MapVisionAngle(visionAction);
+        Debug.Log($"Vision angle set to: {visionAngle} degrees");
     }
 
-    public override void Heuristic(in ActionBuffers actionsOut)
+    // Reward logic
+    if (position == Position.Goalie)
     {
-        var discreteActionsOut = actionsOut.DiscreteActions;
-
-        // Manual controls for testing
-        if (Input.GetKey(KeyCode.W)) discreteActionsOut[0] = 1;
-        if (Input.GetKey(KeyCode.S)) discreteActionsOut[0] = 2;
-        if (Input.GetKey(KeyCode.A)) discreteActionsOut[2] = 1;
-        if (Input.GetKey(KeyCode.D)) discreteActionsOut[2] = 2;
-        if (Input.GetKey(KeyCode.E)) discreteActionsOut[1] = 1;
-        if (Input.GetKey(KeyCode.Q)) discreteActionsOut[1] = 2;
+        AddReward(m_Existential);
     }
+    else if (position == Position.Striker)
+    {
+        AddReward(-m_Existential);
+    }
+
+    // Collect observations with updated vision angle
+    observationHandler.CollectObservations();
+}
+
+
+   public override void Heuristic(in ActionBuffers actionsOut)
+{
+    var discreteActionsOut = actionsOut.DiscreteActions;
+
+    // Manual controls for testing movement
+    if (Input.GetKey(KeyCode.W)) discreteActionsOut[0] = 1;
+    if (Input.GetKey(KeyCode.S)) discreteActionsOut[0] = 2;
+    if (Input.GetKey(KeyCode.A)) discreteActionsOut[2] = 1;
+    if (Input.GetKey(KeyCode.D)) discreteActionsOut[2] = 2;
+   }
+
 
     void OnCollisionEnter(Collision c)
     {
@@ -247,63 +256,15 @@ public class AgentSoccer : Agent
         // Reset ball touch coefficient
         m_BallTouch = m_ResetParams.GetWithDefault("ball_touch", 0);
     }
-
-    private void DetectNearbyObjects()
+    private float MapVisionAngle(int action)
+{
+    switch (action)
     {
-        nearbyObjects.Clear();
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, 10f);
-        foreach (var hitCollider in hitColliders)
-        {
-            if (hitCollider.gameObject != gameObject)
-            {
-                nearbyObjects.Add(hitCollider.transform.position - transform.position);
-            }
-        }
+        case 0: return -15f;
+        case 1: return 15f;
+        case 2: return 0f;
+        default: return 0f;
     }
+}
 
-
-    public void CollectObservations()
-    {
-        DetectNearbyObjects();
-        if (opponentGoal == null)
-        {
-            Debug.LogError("Opponent goal is not set.");
-            return;
-        }
-        if (vectorSensor == null)
-        {
-            vectorSensor = new VectorSensor(memorySize * 10, "Agent Memory");
-        }
-        vectorSensor.Reset();
-        vectorSensor.AddObservation(transform.localPosition);
-        vectorSensor.AddObservation(agentRb.velocity);
-        vectorSensor.AddObservation(m_BallTouch);
-        vectorSensor.AddObservation(opponentGoal.position - transform.position);
-        foreach (var observation in previousObservations)
-        {
-            vectorSensor.AddObservation(observation);
-        }
-        foreach (var obj in nearbyObjects)
-        {
-            vectorSensor.AddObservation(obj);
-        }
-        float[] soundObservations = soundSensor.DetectSound();
-        vectorSensor.AddObservation(soundObservations[0]);
-        vectorSensor.AddObservation(soundObservations[1]);
-        vectorSensor.AddObservation(soundObservations[2]);
-        // Debug.Log($"Sound Observations - Ball: {soundObservations[0]}, Ally: {soundObservations[1]}, Enemy: {soundObservations[2]}");
-        float[] currentObservation = {
-            transform.localPosition.x, transform.localPosition.y, transform.localPosition.z,
-            agentRb.velocity.x, agentRb.velocity.y, agentRb.velocity.z,
-            m_BallTouch,
-            opponentGoal.position.x - transform.position.x,
-            opponentGoal.position.y - transform.position.y,
-            opponentGoal.position.z - transform.position.z
-        };
-        if (previousObservations.Count >= memorySize)
-        {
-            previousObservations.Dequeue();
-        }
-        previousObservations.Enqueue(currentObservation);
-    }
 }
