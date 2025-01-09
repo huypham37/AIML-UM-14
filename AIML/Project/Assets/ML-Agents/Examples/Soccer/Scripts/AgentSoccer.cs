@@ -205,7 +205,6 @@ public class AgentSoccer : Agent
     {
         int visionAction = actionBuffers.DiscreteActions[2];
         visionAngle = MapVisionAngle(visionAction);
-        Debug.Log($"Vision angle set to: {visionAngle} degrees");
     }
 
     // Reward logic

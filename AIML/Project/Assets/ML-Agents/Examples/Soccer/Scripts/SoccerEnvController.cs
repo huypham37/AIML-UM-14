@@ -1,14 +1,16 @@
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing.Text;
 using System.IO;
+using System.Linq;
+using System.Text;
+using ML_Agents.Examples.Soccer.Scripts;
 using Unity.MLAgents;
-using Unity.MLAgents.SideChannels;
-using Unity.MLAgents.Sensors;
+using Unity.Profiling;
 using UnityEngine;
-using Unity.MLAgents.Policies;
-using Unity.Sentis;
-using Unity.Sentis.ONNX;
+using Debug = UnityEngine.Debug;
 using Random = UnityEngine.Random;
-using UnityEditor;
 
 public class SoccerEnvController : MonoBehaviour
 {
@@ -28,7 +30,6 @@ public class SoccerEnvController : MonoBehaviour
     /// <summary>
     /// Max Academy steps before this platform resets
     /// </summary>
-    /// <returns></returns>
     [Tooltip("Max Environment Steps")] public int MaxEnvironmentSteps = 25000;
 
     /// <summary>
@@ -54,19 +55,41 @@ public class SoccerEnvController : MonoBehaviour
     private SimpleMultiAgentGroup m_PurpleAgentGroup;
 
     private int m_ResetTimer;
+    string statsText;
 
-    private int blueTeamGoals = 0;
-    private int purpleTeamGoals = 0;
-    private int blueTeamWins = 0;
-    private StatsRecorder statsRecorder;
+    private ProfilerRecorder systemMemoryRecorder;
+    private ProfilerRecorder mainThreadTimeRecorder;
+    private ProfilerRecorder physicsRecorder;
+    private ProfilerRecorder scriptRecorder;
 
-    private int m_EpisodeCount = 0;
-    private int m_BlueTeamScore = 0;
-    private int m_PurpleTeamScore = 0;
+    Stopwatch wallTimeStopwatch;
+    float lastRecordTime;
+    private float m_BlueCumulativeReward = 0f;
+    private float m_PurpleCumulativeReward = 0f;
+    private float m_TotalBlueCumulativeReward = 0f;
+    private StatsLogger _statsLogger;
 
+    private List<float> mainThreadTimeSamples = new List<float>();
 
+    private FilePathGenerator _filePathGenerator;
+    private PerformanceMetricsProcessor _performanceMetricsProcessor;
     void Start()
     {
+        // Initialize ProfilerRecorders
+        systemMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "System Used Memory");
+        mainThreadTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread", 15);
+
+        // Use the correct event name for Physics
+        var playerLoopCategory = new ProfilerCategory("PlayerLoop");
+
+        physicsRecorder = ProfilerRecorder.StartNew(playerLoopCategory, "FixedUpdate.PhysicsFixedUpdate");
+        scriptRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Scripts, "Scripting");
+
+
+        // Initialize current reward
+        wallTimeStopwatch = new Stopwatch();
+        wallTimeStopwatch.Start();
+
         m_SoccerSettings = FindObjectOfType<SoccerSettings>();
         // Initialize TeamManager
         m_BlueAgentGroup = new SimpleMultiAgentGroup();
@@ -86,21 +109,13 @@ public class SoccerEnvController : MonoBehaviour
             {
                 m_PurpleAgentGroup.RegisterAgent(item.Agent);
             }
-            //  //Load and assign model
-            LoadAndAssignModel();
-
-            // Check if the agent has RayPerceptionSensorComponent3D
-            // foreach (var playerInfo in AgentsList)
-            // {
-            //     var agent = playerInfo.Agent;
-            //     var rayPerceptionSensors = agent.GetComponent<RayPerceptionSensorComponent3D>();
-            //     Debug.Log($"Agent {agent.name} has {rayPerceptionSensors.RayLength} ray perception sensors");
-            //     Debug.Log($"Agent {agent.name} has {rayPerceptionSensors.RaysPerDirection} rays per direction");
-            // }
-
         }
         ResetScene();
-        statsRecorder = Academy.Instance.StatsRecorder;
+
+        _filePathGenerator = new FilePathGenerator();
+        _statsLogger = new StatsLogger(_filePathGenerator.generateFilePath());
+        _performanceMetricsProcessor = new PerformanceMetricsProcessor(_statsLogger);
+
     }
 
     void FixedUpdate()
@@ -115,32 +130,14 @@ public class SoccerEnvController : MonoBehaviour
     }
 
 
-    private void LoadAndAssignModel()
+    private void OnDisable()
     {
-        // Instead of loading as serialized model, load as ModelAsset
-        ModelAsset modelAsset = Resources.Load("SoccerTwos_10m_w") as ModelAsset;
-
-        if(modelAsset == null){
-            Debug.LogError("Failed to load model asset + ");
-            return;
-        }
-
-        foreach(var agent in AgentsList){
-            string behaviourName = agent.Agent.GetComponent<BehaviorParameters>().BehaviorName;
-            InferenceDevice inferenceDevice = InferenceDevice.Burst;
-            var behaviorParameters = agent.Agent.GetComponent<BehaviorParameters>();
-            if(behaviorParameters != null){
-                agent.Agent.SetModel(behaviourName, modelAsset, inferenceDevice);  // Now using ModelAsset
-                behaviorParameters.BehaviorType = BehaviorType.InferenceOnly;
-            }
-            else
-            {
-                Debug.LogWarning($"BehaviorParameters component not found on agent '{agent.Agent.name}'.");
-            }
-            // Debug.Log($"Model assigned to agent '{agent.Agent.name}'");
-        }
+        systemMemoryRecorder.Dispose();
+        mainThreadTimeRecorder.Dispose();
+        physicsRecorder.Dispose();
+        scriptRecorder.Dispose();
+        wallTimeStopwatch.Stop();
     }
-
 
     public void ResetBall()
     {
@@ -157,64 +154,31 @@ public class SoccerEnvController : MonoBehaviour
     {
         if (scoredTeam == Team.Blue)
         {
-            m_BlueTeamScore++;
-            m_BlueAgentGroup.AddGroupReward(1 - (float)m_ResetTimer / MaxEnvironmentSteps);
+            float blueReward = 1 - (float)m_ResetTimer / MaxEnvironmentSteps;
+            m_BlueAgentGroup.AddGroupReward(blueReward);
             m_PurpleAgentGroup.AddGroupReward(-1);
+            m_BlueCumulativeReward += blueReward;
+            m_PurpleCumulativeReward += -1;
+            m_TotalBlueCumulativeReward += blueReward; // Update total blue reward
+            Debug.Log("blue reward: " + m_BlueCumulativeReward);
         }
         else
         {
-            m_PurpleTeamScore++;
-            m_PurpleAgentGroup.AddGroupReward(1 - (float)m_ResetTimer / MaxEnvironmentSteps);
+            float purpleReward = 1 - (float)m_ResetTimer / MaxEnvironmentSteps;
+            m_PurpleAgentGroup.AddGroupReward(purpleReward);
             m_BlueAgentGroup.AddGroupReward(-1);
+            m_PurpleCumulativeReward += purpleReward;
+            m_BlueCumulativeReward += -1;
         }
-
-        // End episode and reset
-        EndEpisode();
-    }
-
-    private void EndEpisode()
-    {
-        m_EpisodeCount++;
-
-        // Update total goals and wins
-        blueTeamGoals += m_BlueTeamScore;
-        purpleTeamGoals += m_PurpleTeamScore;
-        if (m_BlueTeamScore > m_PurpleTeamScore)
-        {
-            blueTeamWins++;
-        }
-
-        // Calculate stats
-        float blueWinRate = (float)blueTeamWins / m_EpisodeCount;
-        float avgBlueGoals = (float)blueTeamGoals / m_EpisodeCount;
-        float avgPurpleGoals = (float)purpleTeamGoals / m_EpisodeCount;
-
-        // Log stats to TensorBoard
-        statsRecorder.Add("Blue Team Win Rate", blueWinRate);
-        statsRecorder.Add("Avg Blue Team Goals", avgBlueGoals);
-        statsRecorder.Add("Avg Purple Team Goals", avgPurpleGoals);
-
-        // Log to console every 100 episodes
-        if (m_EpisodeCount % 100 == 0)
-        {
-            Debug.Log($"Episode {m_EpisodeCount} completed:");
-            Debug.Log($"Blue Team Win Rate: {blueWinRate:F4}");
-            Debug.Log($"Avg Blue Team Goals: {avgBlueGoals:F4}");
-            Debug.Log($"Avg Purple Team Goals: {avgPurpleGoals:F4}");
-            Debug.Log($"Last 100 episodes: Blue {blueTeamWins % 100} wins, {blueTeamGoals - (m_EpisodeCount - 100 > 0 ? blueTeamGoals / (m_EpisodeCount - 100) * 100 : 0)} goals");
-            Debug.Log("--------------------");
-        }
-
         m_PurpleAgentGroup.EndGroupEpisode();
         m_BlueAgentGroup.EndGroupEpisode();
         ResetScene();
     }
 
+
     public void ResetScene()
     {
         m_ResetTimer = 0;
-        m_BlueTeamScore = 0;
-        m_PurpleTeamScore = 0;
 
         //Reset Agents
         foreach (var item in AgentsList)
@@ -229,7 +193,53 @@ public class SoccerEnvController : MonoBehaviour
             item.Rb.angularVelocity = Vector3.zero;
         }
 
+        m_BlueCumulativeReward = 0f;
+        m_PurpleCumulativeReward = 0f;
         //Reset Ball
         ResetBall();
     }
+
+    void Update()
+    {
+        var wallTime = wallTimeStopwatch.Elapsed.TotalMilliseconds;
+        var mainThreadTime = mainThreadTimeRecorder.LastValue * (1e-6f);
+        var systemMemory = systemMemoryRecorder.LastValue / (1024 * 1024);
+        var physicsTime = physicsRecorder.LastValue * (1e-6f);
+
+        _performanceMetricsProcessor.AddMainThreadTimeSample(mainThreadTime);
+        _performanceMetricsProcessor.AddPhysicsTimeSample(physicsTime);
+        _performanceMetricsProcessor.AddSystemMemorySample(systemMemory);
+        _performanceMetricsProcessor.AddBlueRewardSample(m_TotalBlueCumulativeReward);
+
+        _performanceMetricsProcessor.ProcessMetrics((float)wallTime, systemMemoryRecorder, physicsRecorder, scriptRecorder, m_TotalBlueCumulativeReward);
+
+
+        // Increment reset timer
+        m_ResetTimer += 1;
+        if (m_ResetTimer >= MaxEnvironmentSteps)
+        {
+            m_BlueAgentGroup.GroupEpisodeInterrupted();
+            m_PurpleAgentGroup.GroupEpisodeInterrupted();
+            ResetScene();
+        }
+    }
+
+    // double GetRecorderFrameAverage(ProfilerRecorder recorder)
+    // {
+    //     var samplesCount = recorder.Capacity;
+    //     if (samplesCount == 0)
+    //         return 0;
+    //
+    //     double r = 0;
+    //     unsafe
+    //     {
+    //         var samples = stackalloc ProfilerRecorderSample[samplesCount];
+    //         recorder.CopyTo(samples, samplesCount);
+    //         for (var i = 0; i < samplesCount; ++i)
+    //             r += samples[i].Value;
+    //         r /= samplesCount;
+    //     }
+    //
+    //     return r;
+    // }
 }
