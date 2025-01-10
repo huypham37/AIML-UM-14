@@ -67,7 +67,6 @@ public class SoccerEnvController : MonoBehaviour
     private float m_BlueCumulativeReward = 0f;
     private float m_PurpleCumulativeReward = 0f;
     // Tracking total blue reward overall
-    private float m_TotalBlueCumulativeReward = 0f;
     private StatsLogger _statsLogger;
 
     private List<float> mainThreadTimeSamples = new List<float>();
@@ -160,7 +159,6 @@ public class SoccerEnvController : MonoBehaviour
             m_PurpleAgentGroup.AddGroupReward(-1);
             m_BlueCumulativeReward += blueReward;
             m_PurpleCumulativeReward += -1;
-            m_TotalBlueCumulativeReward += blueReward; // Update total blue reward
             Debug.Log("blue reward: " + m_BlueCumulativeReward);
         }
         else
@@ -170,7 +168,6 @@ public class SoccerEnvController : MonoBehaviour
             m_BlueAgentGroup.AddGroupReward(-1);
             m_PurpleCumulativeReward += purpleReward;
             m_BlueCumulativeReward += -1;
-            m_TotalBlueCumulativeReward += -1; // Update total blue reward
         }
         m_PurpleAgentGroup.EndGroupEpisode();
         m_BlueAgentGroup.EndGroupEpisode();
@@ -197,6 +194,7 @@ public class SoccerEnvController : MonoBehaviour
 
         m_BlueCumulativeReward = 0f;
         m_PurpleCumulativeReward = 0f;
+
         //Reset Ball
         ResetBall();
     }
@@ -211,9 +209,9 @@ public class SoccerEnvController : MonoBehaviour
         _performanceMetricsProcessor.AddMainThreadTimeSample(mainThreadTime);
         _performanceMetricsProcessor.AddPhysicsTimeSample(physicsTime);
         _performanceMetricsProcessor.AddSystemMemorySample(systemMemory);
-        _performanceMetricsProcessor.AddBlueRewardSample(m_TotalBlueCumulativeReward);
+        _performanceMetricsProcessor.AddBlueRewardSample(m_BlueCumulativeReward);
 
-        _performanceMetricsProcessor.ProcessMetrics((float)wallTime, systemMemoryRecorder, physicsRecorder, scriptRecorder, m_TotalBlueCumulativeReward);
+        _performanceMetricsProcessor.ProcessMetrics((float)wallTime, systemMemoryRecorder, physicsRecorder, scriptRecorder, m_BlueCumulativeReward);
 
 
         // Increment reset timer
