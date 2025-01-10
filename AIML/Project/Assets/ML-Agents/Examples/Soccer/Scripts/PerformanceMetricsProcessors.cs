@@ -73,7 +73,7 @@ namespace ML_Agents.Examples.Soccer.Scripts
 
                 Debug.Log(sb.ToString());
 
-                _statsLogger.LogStats(meanPhysicsTime, scriptTime, meanSystemMemory, wallTime,
+                _statsLogger.LogStats(meanPhysicsTime, meanMainThreadTime, meanSystemMemory, wallTime,
                     meanBlueReward);
             }
         }
