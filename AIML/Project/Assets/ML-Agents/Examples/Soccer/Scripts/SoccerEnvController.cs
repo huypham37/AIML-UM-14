@@ -66,6 +66,7 @@ public class SoccerEnvController : MonoBehaviour
     float lastRecordTime;
     private float m_BlueCumulativeReward = 0f;
     private float m_PurpleCumulativeReward = 0f;
+    // Tracking total blue reward overall
     private float m_TotalBlueCumulativeReward = 0f;
     private StatsLogger _statsLogger;
 
@@ -169,6 +170,7 @@ public class SoccerEnvController : MonoBehaviour
             m_BlueAgentGroup.AddGroupReward(-1);
             m_PurpleCumulativeReward += purpleReward;
             m_BlueCumulativeReward += -1;
+            m_TotalBlueCumulativeReward += -1; // Update total blue reward
         }
         m_PurpleAgentGroup.EndGroupEpisode();
         m_BlueAgentGroup.EndGroupEpisode();
