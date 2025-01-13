@@ -1,0 +1,59 @@
+\documentclass[a4paper, table]{article}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{apacite}  % Use APA citation style for bibliography
+
+\input{General/Preamble} % Loads in the preamble 
+\input{General/Settings} % Loads in user-defined settings
+
+\begin{document}
+
+% Inserts the front page
+\input{Chapters/0. Frontpage}
+\newpage
+
+% Generates a ToC (if you decide to keep it)
+% Remember, APA does not typically require a table of contents
+{\hypersetup{linkcolor=black} % Keeps the ToC black even with non-black linkcolor
+\tableofcontents\thispagestyle{empty}}
+\newpage
+
+% Contains the abstract (optional in APA)
+\pagenumbering{arabic}
+
+% Creates the introduction (ensure APA formatting for headings)
+\input{Chapters/1_introduction.tex}
+\newpage
+
+% Block Diagram (make sure figures are formatted according to APA)
+\input{report/Chapters/2_Methodology}
+\newpage
+
+% Software Components
+\input{report/Chapters/3_algorithm_performance}
+\newpage
+
+% Task Description 
+\input{report/Chapters/4_results_discussion}
+\newpage
+
+% Gantt Chart
+\input{report/Chapters/5_conclusion}
+\newpage
+
+% References
+% Use an unnumbered section for References
+\renewcommand\refname{}
+
+% Manually insert an unnumbered "References" heading
+
+
+\bibliographystyle{apacite}  % Use APA citation style
+\bibliography{General/References.bib}
+\nocite{*}
+\newpage
+
+\appendix % Any section after this command will have a letter as an index
+% Adds an appendix entry (ensure the appendix headings follow APA format)
+
+\end{document}

@@ -1,0 +1,96 @@
+% Give your report a title
+\newcommand\reporttitle{AI and Machine Learning}
+
+% Insert course code, name, quartile number and year (or any other subtitle)
+\newcommand\reportsubtitle{
+BCS 2720, Project 2-1 
+}
+
+% Add your group number (for DBL) or any other text.
+\newcommand\groupnumber{
+\textbf{Group 14}
+}
+
+% Insert authors and student numbers here
+\newcommand\reportauthors{
+Luca Nichifor & placeholder\\
+Andrei Dodu & placeholder\\
+Huy Pham & placeholder\\
+Magdy Fares & placeholder \\
+Joachim Lewandowski & placeholder\\
+Eduard-Teodor Prescornita & placeholder\\
+Anton Haarmann & placeholder\\
+}
+
+% Add the name of your tutor (for DBL) or any other text.
+\newcommand\grouptutor{
+Examiners:  Dennis Soemers
+}
+
+% Date and location (default: current date and Eindhoven)
+\newcommand\placeanddate{
+Maastricht, \today
+}
+
+% Define UM-blue (color of the UM logo). Can be changed to drastically change the look of the template
+\definecolor{UM-blue}{RGB}{0, 25, 58}
+
+% All of the following code can be removed to be left with (close to) default LaTeX behaviour. 
+
+% Sets up hyperlinks in the document to be colored
+\hypersetup{
+    colorlinks=true,
+    linkcolor=UM-blue,
+    urlcolor=UM-blue,
+    citecolor = UM-blue
+    }
+\urlstyle{same} % Defines settings for link and reference formatting
+
+
+% Change bullet style for level 1, 2 and 3 respectively for itemize
+\renewcommand{\labelitemi}{\scriptsize\textcolor{UM-blue}{$\blacksquare$}}% level 1
+\renewcommand{\labelitemii}{\scriptsize\textcolor{UM-blue}{$\square$}}% level 2
+\renewcommand{\labelitemiii}{\textcolor{UM-blue}{$\circ$}}% level 3
+
+% \renewcommand{\labelitemi}{\small\textcolor{UM-blue}{\ding{70}}} % level 1
+% \renewcommand{\labelitemii}{\small\textcolor{UM-blue}{\ding{71}}}% level 2
+% \renewcommand{\labelitemiii}{\tiny\textcolor{UM-blue}{\ding{71}}}% level 3
+
+% Change bullet style for level 1, 2 and 3 respectively for enumerate
+\renewcommand{\labelenumi}{\textbf{\textcolor{UM-blue}{\arabic*.}}}% level 1
+\renewcommand{\labelenumii}{\textbf{\textcolor{UM-blue}{[\alph*]}}}% level 2
+\renewcommand{\labelenumiii}{\textbf{\textcolor{UM-blue}{\roman*.}}}% level 3
+
+% Have reference labels be linked to section (section 3 will have fig. 3.1 etc.)
+\counterwithin{equation}{section} % For equations
+% \counterwithin{figure}{section} % For figures
+\counterwithin{table}{section} % For tables
+
+% Creates a beautiful header/footer
+\pagestyle{fancy}
+\lhead{\includegraphics[height = 16pt]{Figures/0. General/maastricht-logo-wide.png}}
+\rhead{\reporttitle}
+\renewcommand{\footrulewidth}{0.4pt}
+\cfoot{Page \thepage}
+
+% Formats section, subsection and subsubsection titles respectively 
+\titleformat{\section}{\sffamily\color{UM-blue}\Large\bfseries}{}{0cm}{} 
+
+\titleformat{\subsection}{\sffamily\color{UM-blue}\large\bfseries}{\thesubsection\enskip\color{gray}\textbar\enskip}{0cm}{} % Formats subsection titles
+
+\titleformat{\subsubsection}{\sffamily\color{UM-blue}\bfseries}{\thesubsubsection\enskip\color{gray}\textbar\enskip}{0cm}{} % Formats subsubsection titles
+
+% Formats captions
+\DeclareCaptionFont{UM-blue}{\color{UM-blue}}
+\captionsetup{labelfont={UM-blue,bf}}
+
+ % Changes font to mlmodern
+\usepackage{mlmodern}
+
+% Removes indent when starting a new paragraph
+\setlength\parindent{0pt}
+
+% Limits the ToC to sections and subsections (no subsubsec.)
+% \setcounter{secnumdepth}{0}% This disables section numbering
+\setcounter{secnumdepth}{1}  
+\setcounter{tocdepth}{2}

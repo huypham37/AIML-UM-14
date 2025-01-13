@@ -1,0 +1,86 @@
+\section{Methodology}
+
+\subsection{Experimental Setup}
+
+% Hardware specifications
+\subsubsection{Hardware}
+\begin{itemize}
+    \item CPU: [e.g., Intel Core i7-12700K]
+    \item GPU: [e.g., NVIDIA GeForce RTX 3080]
+    \item RAM: [e.g., 32 GB DDR5]
+    \item Operating System: [e.g., Windows 10]
+\end{itemize}
+
+% Software versions and configurations
+\subsubsection{Software}
+\begin{itemize}
+    \item Unity Version: [e.g., 2022.3.0f1]
+    \item ML-Agents Release: [e.g., Release 20]
+    \item Python Version: [e.g., 3.9]
+    \item TensorFlow/PyTorch Version: [e.g., TensorFlow 2.10.0]
+    \item CUDA/cuDNN Version: [e.g., CUDA 11.7, cuDNN 8.5]
+\end{itemize}
+
+% Testing environments selected
+\subsubsection{Testing Environments}
+\begin{itemize}
+    \item Environment 1: [Detailed description of environment setup, parameters, etc.]
+    \item Environment 2: [Detailed description]
+    \item ...
+\end{itemize}
+
+% Metrics tracked (wall time, CPU usage, GPU usage, memory, framerate)
+\subsubsection{Metrics Tracked}
+The following performance metrics were collected:
+\begin{itemize}
+    \item \textbf{Wall Time:} Total time taken for training sessions.
+    \item \textbf{CPU Usage:} Percentage of CPU utilization.
+    \item \textbf{GPU Usage:} Percentage of GPU utilization, including memory usage.
+    \item \textbf{Memory Usage:} System RAM usage during training.
+    \item \textbf{Framerate:} Frames per second (FPS) in Unity during training (when applicable).
+\end{itemize}
+
+\subsection{Performance Metrics}
+
+% Description of how each metric was measured
+\subsubsection{Measurement Methodology}
+\begin{itemize}
+    \item \textbf{Wall Time:} Measured using Python's `time` module.
+    \item \textbf{CPU Usage:} Collected using [e.g., the `psutil` library in Python].
+    \item \textbf{GPU Usage:} Collected using [e.g., `nvidia-smi` and the `pynvml` library].
+    \item \textbf{Memory Usage:} Measured using [e.g., the `psutil` library].
+    \item \textbf{Framerate:} Measured using Unity's built-in Stats window or Profiler.
+\end{itemize}
+
+% Unity Profiler setup and configuration
+\subsubsection{Unity Profiler Configuration}
+The Unity Profiler was used to collect detailed performance data within the Unity Editor. The following settings were used:
+\begin{itemize}
+    \item Profiler Mode: [e.g., Deep Profile]
+    \item Modules Enabled: [e.g., CPU, GPU, Memory, Physics]
+    \item ...
+\end{itemize}
+
+% Data collection methods
+\subsubsection{Data Collection Methods}
+Data was collected at regular intervals during training sessions. For each metric, the average, minimum, and maximum values were recorded.
+
+% Tools and scripts used for measurements
+\subsubsection{Tools and Scripts}
+\begin{itemize}
+    \item \textbf{Unity Profiler:} For in-editor performance analysis.
+    \item \textbf{Python Scripts:} Custom scripts using libraries like `psutil`, `pynvml`, and `time` for collecting system-level metrics.
+    \item \textbf{TensorBoard:} For visualizing training progress and performance metrics.
+    \item [List any other tools like `nvidia-smi`, ML-Agents Profiler, etc.]
+\end{itemize}
+
+\begin{lstlisting}[language=Python, caption=Example Python Script for Monitoring]
+import psutil
+import time
+
+while True:
+    cpu_percent = psutil.cpu_percent()
+    mem_percent = psutil.virtual_memory().percent
+    print(f"CPU: {cpu_percent}%, Memory: {mem_percent}%")
+    time.sleep(1)
+\end{lstlisting}
