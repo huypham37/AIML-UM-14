@@ -1,0 +1,3 @@
+T-test results:
+T-statistic = nan
+P-value = nan
