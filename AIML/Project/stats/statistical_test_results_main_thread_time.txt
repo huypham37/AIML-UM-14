@@ -1,0 +1,3 @@
+T-test results for Main Thread Time (ms):
+T-statistic = -4.3776
+P-value = 1.2005e-05

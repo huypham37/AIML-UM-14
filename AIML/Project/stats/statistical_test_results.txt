@@ -1,3 +1,9 @@
 T-test results:
-T-statistic = nan
-P-value = nan
+
+Main Thread Time (ms):
+T-statistic = -4.3776
+P-value = 1.2005e-05
+
+Wall Time (ms):
+T-statistic = 9.3199
+P-value = 1.1786e-20

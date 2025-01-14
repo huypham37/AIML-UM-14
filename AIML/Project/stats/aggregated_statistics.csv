@@ -1,5 +1,5 @@
-,Physics Time (ms),Physics Time (ms),Main Thread Time (ms),Main Thread Time (ms),System Memory (MB),System Memory (MB),Wall Time (ms),Wall Time (ms)
-,mean,std,mean,std,mean,std,mean,std
-Learning Rate,,,,,,,,
-0.0001,14.677299088649544,1.3658891982021004,649.130189092342,296.09418083241275,2164.915086214255,16.837410989984104,4609956.76969446,2667206.73960648
-0.001,14.07498166348834,1.2373740047944146,642.6072027527159,302.65657319725665,2139.984486699917,13.537358425609701,4735417.48723901,2742048.8100762684
+,Physics Time (ms),Physics Time (ms),Physics Time (ms),Physics Time (ms),Physics Time (ms),Main Thread Time (ms),Main Thread Time (ms),Main Thread Time (ms),Main Thread Time (ms),Main Thread Time (ms),System Memory (MB),System Memory (MB),System Memory (MB),System Memory (MB),System Memory (MB),Wall Time (ms),Wall Time (ms),Wall Time (ms),Wall Time (ms),Wall Time (ms),Blue Cumulative Reward,Blue Cumulative Reward,Blue Cumulative Reward,Blue Cumulative Reward,Blue Cumulative Reward
+,mean,median,std,min,max,mean,median,std,min,max,mean,median,std,min,max,mean,median,std,min,max,mean,median,std,min,max
+Learning Rate,,,,,,,,,,,,,,,,,,,,,,,,,
+0.0001,14.677299088649544,14.6,1.3658891982021004,10.9,38.4,649.130189092342,545.634399414063,296.09418083241275,400.109313964844,1768.31140136719,2164.915086214255,2176.842,16.837410989984104,2033.632,2184.0,4609956.76969446,4609775.0,2667206.73960648,10019.9,9475293.0,0.0,0.0,0.0,0,0
+0.001,14.07498166348834,14.0,1.2373740047944146,10.7,56.8,642.6072027527159,537.882507324219,302.65657319725665,378.125213623047,4460.29248046875,2139.984486699917,2143.2,13.537358425609701,1911.286,2152.0,4735417.48723901,4728727.75,2742048.8100762684,10173.4,9704264.0,0.0,0.0,0.0,0,0
