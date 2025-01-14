@@ -159,7 +159,9 @@ public class SoccerEnvController : MonoBehaviour
             m_PurpleAgentGroup.AddGroupReward(-1);
             m_BlueCumulativeReward += blueReward;
             m_PurpleCumulativeReward += -1;
-            Debug.Log("blue reward: " + m_BlueCumulativeReward);
+            _performanceMetricsProcessor.AddBlueRewardSample(m_BlueCumulativeReward);
+
+            // Debug.Log("blue reward: " + m_BlueCumulativeReward);
         }
         else
         {
@@ -209,7 +211,6 @@ public class SoccerEnvController : MonoBehaviour
         _performanceMetricsProcessor.AddMainThreadTimeSample(mainThreadTime);
         _performanceMetricsProcessor.AddPhysicsTimeSample(physicsTime);
         _performanceMetricsProcessor.AddSystemMemorySample(systemMemory);
-        _performanceMetricsProcessor.AddBlueRewardSample(m_BlueCumulativeReward);
 
         _performanceMetricsProcessor.ProcessMetrics((float)wallTime, systemMemoryRecorder, physicsRecorder, scriptRecorder, m_BlueCumulativeReward);
 

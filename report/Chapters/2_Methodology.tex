@@ -1,6 +1,7 @@
 \section{Methodology}
 
-\subsection{Experimental Setup}
+\subsection{Research Design}
+This study employs a factorial experimental design to investigate how different learning parameters affect the computational efficiency of the POCA (Proximal Policy Optimization Collective Agents) algorithm in Unity's SoccerTwos environment.
 
 % Hardware specifications
 \subsubsection{Hardware}
@@ -21,66 +22,39 @@
     \item CUDA/cuDNN Version: [e.g., CUDA 11.7, cuDNN 8.5]
 \end{itemize}
 
-% Testing environments selected
-\subsubsection{Testing Environments}
+\subsection{Variables}
+\subsubsection{Independent Variables}
 \begin{itemize}
-    \item Environment 1: [Detailed description of environment setup, parameters, etc.]
-    \item Environment 2: [Detailed description]
-    \item ...
+\item Learning Rate: $[1e-4, 1e-3]$
+\item Batch Size: $[512, 2048]$
+\item Buffer Size: $[10000, 20000]$
 \end{itemize}
-
-% Metrics tracked (wall time, CPU usage, GPU usage, memory, framerate)
-\subsubsection{Metrics Tracked}
-The following performance metrics were collected:
+\subsubsection{Dependent Variables}
 \begin{itemize}
-    \item \textbf{Wall Time:} Total time taken for training sessions.
-    \item \textbf{CPU Usage:} Percentage of CPU utilization.
-    \item \textbf{GPU Usage:} Percentage of GPU utilization, including memory usage.
-    \item \textbf{Memory Usage:} System RAM usage during training.
-    \item \textbf{Framerate:} Frames per second (FPS) in Unity during training (when applicable).
+\item Wall Clock Time (seconds)
+\item Physics Processing Time (milliseconds)
+\item Main Thread Time (milliseconds)
+\item System Memory Usage (MB)
+\item Blue Team Group Reward 
 \end{itemize}
-
-\subsection{Performance Metrics}
-
-% Description of how each metric was measured
-\subsubsection{Measurement Methodology}
+\subsection{Data Collection}
+Performance metrics are collected usuing Unity's buitt
 \begin{itemize}
-    \item \textbf{Wall Time:} Measured using Python's `time` module.
-    \item \textbf{CPU Usage:} Collected using [e.g., the `psutil` library in Python].
-    \item \textbf{GPU Usage:} Collected using [e.g., `nvidia-smi` and the `pynvml` library].
-    \item \textbf{Memory Usage:} Measured using [e.g., the `psutil` library].
-    \item \textbf{Framerate:} Measured using Unity's built-in Stats window or Profiler.
+\item Metrics are sampled at 30-second intervals during training (reason here)
+\item Each parameter combination is tested in 3 independent training runs to account for variance
+\item Training duration: 2 hours per configuration
+\item All experiments run on identical hardware specifications: [List hardware specs]
 \end{itemize}
-
-% Unity Profiler setup and configuration
-\subsubsection{Unity Profiler Configuration}
-The Unity Profiler was used to collect detailed performance data within the Unity Editor. The following settings were used:
+\subsection{Control Measures}
 \begin{itemize}
-    \item Profiler Mode: [e.g., Deep Profile]
-    \item Modules Enabled: [e.g., CPU, GPU, Memory, Physics]
-    \item ...
+\item Consistent environmental conditions (same Unity version, ML-Agents version)
+\item Background processes minimized during experiments
 \end{itemize}
-
-% Data collection methods
-\subsubsection{Data Collection Methods}
-Data was collected at regular intervals during training sessions. For each metric, the average, minimum, and maximum values were recorded.
-
-% Tools and scripts used for measurements
-\subsubsection{Tools and Scripts}
+\subsection{Data Analysis}
 \begin{itemize}
-    \item \textbf{Unity Profiler:} For in-editor performance analysis.
-    \item \textbf{Python Scripts:} Custom scripts using libraries like `psutil`, `pynvml`, and `time` for collecting system-level metrics.
-    \item \textbf{TensorBoard:} For visualizing training progress and performance metrics.
-    \item [List any other tools like `nvidia-smi`, ML-Agents Profiler, etc.]
+\item Performance metrics aggregated using mean values across runs
+\item Data visualized using [specify software]
+\item Statistical significance tested using [specify test]
+\item Correlation analysis between computational metrics and training performance
+\item Profiling data collected and visualized using Unity's built-in Profiling API for detailed performance analysis.
 \end{itemize}
-
-\begin{lstlisting}[language=Python, caption=Example Python Script for Monitoring]
-import psutil
-import time
-
-while True:
-    cpu_percent = psutil.cpu_percent()
-    mem_percent = psutil.virtual_memory().percent
-    print(f"CPU: {cpu_percent}%, Memory: {mem_percent}%")
-    time.sleep(1)
-\end{lstlisting}
