@@ -1,3 +1,0 @@
-T-test results for Wall Time (ms):
-T-statistic = 9.3199
-P-value = 1.1786e-20
