@@ -1,0 +1,74 @@
+\section{Algorithm Performance Analysis}
+
+\subsection{Learning Algorithm Parameters}
+
+% Impact of learning rates
+\subsubsection{Learning Rates}
+Experiments were conducted with varying learning rates to determine their impact on training performance.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/learning_rate_comparison.png}
+    \caption{Training reward vs. steps for different learning rates.}
+    \label{fig:learning_rate}
+\end{figure}
+
+% Neural network architecture variations
+\subsubsection{Neural Network Architectures}
+The effect of different neural network architectures was analyzed.
+
+\begin{table}[h]
+    \centering
+    \caption{Performance comparison of different neural network architectures.}
+    \begin{tabular}{lccc}
+        \toprule
+        Architecture & Layers & Hidden Units & Training Time (s) \\
+        \midrule
+        Small & 2 & 64 & 1200 \\
+        Medium & 3 & 128 & 1800 \\
+        Large & 4 & 256 & 2500 \\
+        \bottomrule
+    \end{tabular}
+    \label{tab:nn_architectures}
+\end{table}
+
+% Environment copies analysis
+\subsubsection{Environment Copies}
+Training with multiple environment copies was investigated to determine its impact on training speed and resource utilization.
+
+% Training duration and convergence rates
+\subsubsection{Training Duration and Convergence}
+The relationship between training duration and convergence rates was analyzed for each algorithm.
+
+\subsection{Input/Sensor Configuration Analysis}
+
+% Comparison of different sensor configurations
+\subsubsection{Sensor Configurations}
+Different sensor configurations (e.g., raycasts, cameras, custom sensors) were compared.
+
+% Impact on training efficiency
+\subsubsection{Impact on Training Efficiency}
+The effect of sensor configuration on training efficiency was evaluated.
+
+% Memory and processing overhead
+\subsubsection{Memory and Processing Overhead}
+The memory and processing overhead associated with each sensor type were measured.
+
+% Evaluation of custom sensor implementation
+\subsubsection{Custom Sensor Implementation}
+[If you implemented a custom sensor, describe its performance characteristics here.]
+
+\subsection{Training Environment Analysis}
+
+% In-editor vs compiled executable performance
+\subsubsection{In-Editor vs. Compiled Executable}
+Performance was compared between training within the Unity editor and training with a compiled executable.
+
+% Scaling behavior with environment complexity
+\subsubsection{Scaling with Environment Complexity}
+Experiments were conducted to analyze how performance scales with increasing environment complexity.
+
+% Resource utilization patterns
+\subsubsection{Resource Utilization Patterns}
+Resource utilization patterns (CPU, GPU, memory) were analyzed for different environment complexities.
+

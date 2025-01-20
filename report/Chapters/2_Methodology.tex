@@ -1,0 +1,60 @@
+\section{Methodology}
+
+\subsection{Research Design}
+This study employs a factorial experimental design to investigate how different learning parameters affect the computational efficiency of the POCA (Proximal Policy Optimization Collective Agents) algorithm in Unity's SoccerTwos environment.
+
+% Hardware specifications
+\subsubsection{Hardware}
+\begin{itemize}
+    \item CPU: [e.g., Intel Core i7-12700K]
+    \item GPU: [e.g., NVIDIA GeForce RTX 3080]
+    \item RAM: [e.g., 32 GB DDR5]
+    \item Operating System: [e.g., Windows 10]
+\end{itemize}
+
+% Software versions and configurations
+\subsubsection{Software}
+\begin{itemize}
+    \item Unity Version: [e.g., 2022.3.0f1]
+    \item ML-Agents Release: [e.g., Release 20]
+    \item Python Version: [e.g., 3.9]
+    \item TensorFlow/PyTorch Version: [e.g., TensorFlow 2.10.0]
+    \item CUDA/cuDNN Version: [e.g., CUDA 11.7, cuDNN 8.5]
+\end{itemize}
+
+\subsection{Variables}
+\subsubsection{Independent Variables}
+\begin{itemize}
+\item Learning Rate: $[1e-4, 1e-3]$
+\item Batch Size: $[512, 2048]$
+\item Buffer Size: $[10000, 20000]$
+\end{itemize}
+\subsubsection{Dependent Variables}
+\begin{itemize}
+\item Wall Clock Time (seconds)
+\item Physics Processing Time (milliseconds)
+\item Main Thread Time (milliseconds)
+\item System Memory Usage (MB)
+\item Blue Team Group Reward 
+\end{itemize}
+\subsection{Data Collection}
+Performance metrics are collected usuing Unity's buitt
+\begin{itemize}
+\item Metrics are sampled at 30-second intervals during training (reason here)
+\item Each parameter combination is tested in 3 independent training runs to account for variance
+\item Training duration: 2 hours per configuration
+\item All experiments run on identical hardware specifications: [List hardware specs]
+\end{itemize}
+\subsection{Control Measures}
+\begin{itemize}
+\item Consistent environmental conditions (same Unity version, ML-Agents version)
+\item Background processes minimized during experiments
+\end{itemize}
+\subsection{Data Analysis}
+\begin{itemize}
+\item Performance metrics aggregated using mean values across runs
+\item Data visualized using [specify software]
+\item Statistical significance tested using [specify test]
+\item Correlation analysis between computational metrics and training performance
+\item Profiling data collected and visualized using Unity's built-in Profiling API for detailed performance analysis.
+\end{itemize}

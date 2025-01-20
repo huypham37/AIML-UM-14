@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Drawing.Printing;
 using System.Linq;
 using System.Text;
 using UnityEngine;
@@ -43,9 +44,9 @@ namespace ML_Agents.Examples.Soccer.Scripts
         }
 
         public void ProcessMetrics(float wallTime, ProfilerRecorder systemMemoryRecorder,
-            ProfilerRecorder physicsRecorder, ProfilerRecorder scriptRecorder, float totalBlueCumulativeReward)
+            ProfilerRecorder physicsRecorder, ProfilerRecorder scriptRecorder, float blueCumulativeReward)
         {
-            if (wallTime - lastRecordTime >= 10000)
+            if (wallTime - lastRecordTime >= 30000)
             {
                 lastRecordTime = wallTime;
 
@@ -53,6 +54,7 @@ namespace ML_Agents.Examples.Soccer.Scripts
                 var meanPhysicsTime = physicsTimeSamples.Count > 0 ? physicsTimeSamples.Average() : 0;
                 var meanSystemMemory = systemMemorySamples.Count > 0 ? systemMemorySamples.Average() : 0;
                 var meanBlueReward = blueRewardSamples.Count > 0 ? blueRewardSamples.Average() : 0;
+                Debug.Log("mean blue reward: " + meanBlueReward);
 
                 mainThreadTimeSamples.Clear();
                 physicsTimeSamples.Clear();
@@ -73,7 +75,7 @@ namespace ML_Agents.Examples.Soccer.Scripts
 
                 Debug.Log(sb.ToString());
 
-                _statsLogger.LogStats(meanPhysicsTime, scriptTime, meanSystemMemory, wallTime,
+                _statsLogger.LogStats(meanPhysicsTime, meanMainThreadTime, meanSystemMemory, wallTime,
                     meanBlueReward);
             }
         }

@@ -19,14 +19,14 @@ namespace ML_Agents.Examples.Soccer.Scripts
 
         private void WriteHeader()
         {
-            var header = "Physics Time (ms),Script Time (ms),System Memory (MB),Wall Time (ms),Blue Cumulative Reward";
+            var header = "Physics Time (ms),Main Thread Time (ms),System Memory (MB),Wall Time (ms),Blue Cumulative Reward";
             File.WriteAllText(_filePath, header + Environment.NewLine);
         }
 
-        public void LogStats(double physicsTime, double scriptTime, float systemMemory, double wallTime, float blueCumulativeReward)
+        public void LogStats(double physicsTime, double mainThreadTime, float systemMemory, double wallTime, float blueCumulativeReward)
         {
             var sb = new StringBuilder();
-            sb.AppendLine($"{physicsTime:F1},{scriptTime},{systemMemory},{wallTime:F1},{blueCumulativeReward}");
+            sb.AppendLine($"{physicsTime:F1},{mainThreadTime},{systemMemory},{wallTime:F1},{blueCumulativeReward}");
             File.AppendAllText(_filePath, sb.ToString());
         }
     }
