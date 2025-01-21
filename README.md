@@ -127,5 +127,5 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 ## Acknowledgments
 
 - Unity ML-Agents team
-- Project supervisor: Dennis Soemers
-- Maastricht University, Department of Advanced Computing Sciences
+- Project supervisor: Dennis Soemers.
+- Maastricht University, Department of Advanced Computing Sciences.
