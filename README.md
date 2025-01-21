@@ -12,6 +12,8 @@ This repository contains our implementation and analysis of the Unity ML-Agents 
 
 ## Installation
 
+### Basic Installation
+
 1. Clone the repository:
 ```bash
 git clone --branch fix-numpy-release-21-branch https://github.com/DennisSoemers/ml-agents.git
@@ -26,6 +28,11 @@ python -m venv venv
 source venv/bin/activate
 ```
 
+### Detailed Installation
+
+For more detailed installation instruction,
+
+[[Official installation guide](https://unity-technologies.github.io/ml-agents/Installation/)]
 3. Install dependencies:
 ```bash
 pip install -r requirements.txt
