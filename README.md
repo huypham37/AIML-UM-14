@@ -33,6 +33,7 @@ source venv/bin/activate
 For more detailed installation instruction,
 
 [[Official installation guide](https://unity-technologies.github.io/ml-agents/Installation/)]
+
 3. Install dependencies:
 ```bash
 pip install -r requirements.txt
