@@ -43,7 +43,7 @@ pip install -r requirements.txt
 2. Ensure ML-Agents is properly configured in the Unity Editor
 3. Run the training using:
 ```bash
-mlagents-learn config/soccer_twos.yaml --run-id=soccer_test
+mlagents-learn config/poca/SoccerTwos.yaml --run-id= YOUR-RUN-ID
 ```
 
 ### Build Training (Executable)
@@ -54,7 +54,7 @@ mlagents-learn config/soccer_twos.yaml --run-id=soccer_test
    - Build the project
 2. Run training on the built executable:
 ```bash
-mlagents-learn config/soccer_twos.yaml --env=./Build/SoccerTwos --run-id=soccer_build_test
+mlagents-learn config/poca/SoccerTwos.yaml --env=./Build/SoccerTwos --run-id= YOUR-RUN-ID
 ```
 
 ## Loading Trained Models
@@ -90,16 +90,14 @@ mlagents-learn config/soccer_twos.yaml --env=./Build/SoccerTwos --run-id=soccer_
 Our experiments use the following parameter ranges:
 
 - Learning Rate: {1×10^-4, 1×10^-3}
-- Batch Size: {512, 5012}
+- Batch Size: {512, 5120}
 - Buffer Size: {10000, 409600}
 
 To replicate our experiments:
 
-1. Use the provided configuration files in `config/experiments/`
+1. Change the default configuration to certain value, keep the rest of the config file intact.
 2. Run each configuration using:
 ```bash
-mlagents-learn config/experiments/config_1.yaml --run-id=experiment_1
-```
 
 3. Monitor training progress:
 ```bash
@@ -112,10 +110,10 @@ Metrics are sampled at 30-second intervals during training sessions. Each parame
 
 ## Results Analysis
 
-Results and analysis scripts can be found in the `analysis` directory. Use the provided Jupyter notebooks to reproduce our analysis:
+Results and analysis scripts can be found in the `stats` directory. Use the provided Jupyter notebooks to reproduce our analysis:
 
 ```bash
-jupyter notebook analysis/performance_analysis.ipynb
+jupyter notebook Project/stats
 ```
 
 ## Contributing
