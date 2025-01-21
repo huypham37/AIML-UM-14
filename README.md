@@ -104,10 +104,8 @@ Our experiments use the following parameter ranges:
 To replicate our experiments:
 
 1. Change the default configuration to certain value, keep the rest of the config file intact.
-2. Run each configuration using:
-```bash
 
-3. Monitor training progress:
+2. Monitor training progress:
 ```bash
 tensorboard --logdir results
 ```
