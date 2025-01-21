@@ -28,12 +28,6 @@ python -m venv venv
 source venv/bin/activate
 ```
 
-### Detailed Installation
-
-For more detailed installation instruction,
-
-[[Official installation guide](https://unity-technologies.github.io/ml-agents/Installation/)]
-
 3. Install dependencies:
 ```bash
 pip install -r requirements.txt
@@ -42,6 +36,12 @@ pip install -r requirements.txt
 4. Install the ML-Agents package in Unity through the Package Manager:
    - Window → Package Manager → Add package from git URL
    - Enter: `com.unity.ml-agents`
+
+### Detailed Installation
+
+For more detailed installation instruction,
+
+[[Official installation guide](https://unity-technologies.github.io/ml-agents/Installation/)]
 
 ## Training the Model
 
